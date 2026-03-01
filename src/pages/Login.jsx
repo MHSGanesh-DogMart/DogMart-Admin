@@ -28,12 +28,12 @@ export default function Login() {
       {/* Background glow */}
       < div style={{
         position: 'absolute', width: 500, height: 500, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(255,123,84,0.1) 0%, transparent 70%)',
         top: -100, left: -100, pointerEvents: 'none'
       }} />
       < div style={{
         position: 'absolute', width: 400, height: 400, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(255,178,107,0.06) 0%, transparent 70%)',
         bottom: -50, right: -50, pointerEvents: 'none'
       }} />
 

@@ -55,6 +55,7 @@ export default function LandingPage() {
                     <a href="#contact" style={{ textDecoration: 'none', color: '#475569', fontWeight: 600 }}>Support</a>
                     <button style={{ background: 'none', border: 'none', color: '#475569', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => navigate('/privacy')}>Privacy</button>
                     <button style={{ background: 'none', border: 'none', color: '#475569', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => navigate('/terms')}>Terms</button>
+                    <button style={{ background: 'linear-gradient(135deg, #FF7B54, #E0603B)', border: 'none', color: 'white', padding: '10px 20px', borderRadius: '50px', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 123, 84, 0.2)' }} onClick={() => navigate('/login')}>Admin Portal</button>
                 </div>
             </header>
 

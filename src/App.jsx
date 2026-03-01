@@ -18,7 +18,7 @@ import Subscriptions from './pages/Subscriptions';
 import Locations from './pages/Locations';
 import Reviews from './pages/Reviews';
 import Payments from './pages/Payments';
-import Settings from './pages/Settings_ascii';
+import Settings from './pages/Settings';
 import ServiceBookings from './pages/ServiceBookings';
 import Support from './pages/Support';
 import FCMManager from './components/FCMManager';

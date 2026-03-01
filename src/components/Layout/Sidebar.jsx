@@ -32,7 +32,7 @@ export default function Sidebar() {
     return (
         <aside style={{
             width: 'var(--sidebar-w)', position: 'fixed', left: 0, top: 0, bottom: 0,
-            background: 'var(--bg2)', borderRight: '1px solid var(--border)',
+            background: 'var(--surface)', borderRight: '1px solid var(--border)',
             display: 'flex', flexDirection: 'column', zIndex: 200, overflow: 'hidden'
         }}>
             {/* Logo */}
@@ -47,7 +47,7 @@ export default function Sidebar() {
                         <Heart size={18} color="white" fill="white" />
                     </div>
                     <div>
-                        <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text)' }}>DogMart</div>
+                        <div style={{ fontWeight: 800, fontSize: 16, color: '#FF7B54', fontFamily: '"Outfit", sans-serif' }}>DogMart</div>
                         <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.05em' }}>ADMIN PANEL</div>
                     </div>
                 </div>

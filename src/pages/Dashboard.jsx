@@ -35,15 +35,20 @@ export default function Dashboard() {
                     getDocs(query(collection(db, 'reports'), where('resolved', '==', false))),
                 ]);
 
-                // For earnings, we would ideally query a payments/transactions collection 
-                // but since Razorpay creates subscriptions, we'll estimate from active subs for the demo
-                // Or if we have a transactions collection, we query that. 
-                // Let's assume a dummy earnings calculation or fetch from subscriptions if amount is there.
-                let earnings = 0;
+                const completedBookingsSnap = await getDocs(query(collection(db, 'bookings'), where('status', '==', 'completed')));
+
+                let subsEarnings = 0;
                 subsSnap.forEach(doc => {
                     const data = doc.data();
-                    earnings += (data.amount || 99);
+                    subsEarnings += (data.amount || 99);
                 });
+
+                let commissionEarnings = 0;
+                completedBookingsSnap.forEach(doc => {
+                    commissionEarnings += (doc.data().amountPaid || 0) * 0.15; // 15% platform cut
+                });
+
+                const totalEarnings = subsEarnings + commissionEarnings;
 
                 const activeListings = listingsSnap.docs.filter(d => d.data().status === 'active').length;
                 const pendingListingsDoc = listingsSnap.docs.filter(d => d.data().status === 'pending');
@@ -54,24 +59,31 @@ export default function Dashboard() {
                     listings: pendingListings, // Show pending in stats card
                     active: activeListings,
                     reports: reportsSnap.size,
-                    earnings,
+                    earnings: totalEarnings,
                     subs: subsSnap.size
                 });
 
                 const recent = pendingListingsDoc.slice(0, 8).map(d => ({ id: d.id, ...d.data() }));
                 setRecentBookings(recent); // Reusing state name for recent listings
 
-                // Last 7 days earnings (dummy logic based on subscriptions for now to keep chart alive)
+                // Last 7 days earnings
                 const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 const today = new Date();
                 const weekChart = Array.from({ length: 7 }, (_, i) => {
                     const d = new Date(today); d.setDate(today.getDate() - (6 - i));
                     const dayName = days[d.getDay()];
-                    const amt = subsSnap.docs.filter(b => {
+
+                    const subAmt = subsSnap.docs.filter(b => {
                         const bd = b.data().startDate?.toDate?.() ? b.data().startDate.toDate() : new Date(b.data().startDate || 0);
                         return bd.toDateString() === d.toDateString();
                     }).reduce((s, b) => s + (b.data().amount || 99), 0);
-                    return { day: dayName, earnings: amt };
+
+                    const comAmt = completedBookingsSnap.docs.filter(b => {
+                        const bd = b.data().createdAt?.toDate?.() ? b.data().createdAt.toDate() : new Date(b.data().createdAt || 0);
+                        return bd.toDateString() === d.toDateString();
+                    }).reduce((s, b) => s + ((b.data().amountPaid || 0) * 0.15), 0);
+
+                    return { day: dayName, earnings: subAmt + comAmt };
                 });
                 setWeekData(weekChart);
             } catch (e) { console.error(e); }
@@ -96,7 +108,7 @@ export default function Dashboard() {
                             <StatCard label="Total Users" value={stats.users} icon={Users} color="purple" />
                             <StatCard label="Pending Listings" value={stats.listings} icon={CalendarDays} color="teal" />
                             <StatCard label="Active Listings" value={stats.active} icon={TrendingUp} color="green" />
-                            <StatCard label="Unresolved Reports" value={stats.reports} icon={AlertTriangle} color="amber" />
+                            <StatCard label="Unresolved Reports" value={stats.reports} icon={AlertTriangle} color="red" />
                             <StatCard label="Monthly Revenue" value={`₹${stats.earnings.toLocaleString()}`} icon={IndianRupee} color="purple" />
                         </div>
 
@@ -124,8 +136,8 @@ export default function Dashboard() {
                                         <Bar dataKey="earnings" fill="url(#grad)" radius={[6, 6, 0, 0]} />
                                         <defs>
                                             <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#a855f7" />
-                                                <stop offset="100%" stopColor="#7c3aed" />
+                                                <stop offset="0%" stopColor="#FF7B54" />
+                                                <stop offset="100%" stopColor="#FFB26B" />
                                             </linearGradient>
                                         </defs>
                                     </BarChart>
