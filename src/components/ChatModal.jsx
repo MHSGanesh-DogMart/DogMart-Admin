@@ -63,7 +63,7 @@ export default function ChatModal({ booking, onClose }) {
             scrollToBottom();
 
             // Fire Push Notification to User
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://65.2.129.246:3001';
             fetch(`${apiUrl}/api/notifications/chat-message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

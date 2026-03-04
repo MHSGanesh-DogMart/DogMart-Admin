@@ -99,7 +99,7 @@ export default function ServiceBookings() {
     const [selected, setSelected] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://65.2.129.246:3001';
 
     useEffect(() => {
         fetch(`${BACKEND}/api/service-bookings`)

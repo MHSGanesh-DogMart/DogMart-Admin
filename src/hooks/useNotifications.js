@@ -40,7 +40,7 @@ export function useNotifications() {
             if (token) {
                 // Subscribe to admin topic via backend
                 try {
-                    await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications/subscribe-admin`, {
+                    await fetch(`${import.meta.env.VITE_API_URL || 'http://65.2.129.246:3001'}/api/notifications/subscribe-admin`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ token }),

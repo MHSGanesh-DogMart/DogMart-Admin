@@ -19,7 +19,7 @@ export default function FCMManager() {
 
                     if (token) { // Changed from currentToken to token to match original variable name
                         console.log('Got FCM token for admin web:', token); // Changed message and variable name
-                        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                        const apiUrl = import.meta.env.VITE_API_URL || 'http://65.2.129.246:3001';
                         // Send token to backend to subscribe to 'admin' topic
                         await fetch(`${apiUrl}/api/notifications/subscribe-admin`, {
                             method: 'POST',
