@@ -22,10 +22,7 @@ const ListingModal = ({ listing, onClose, onRefresh }) => {
         }
         setActioning(true);
         try {
-            await api.patch(`/admin/listings/${listing.id}/status`, {
-                status,
-                adminNote: note
-            });
+            await api.patch(`/products/${listing.id}/status`, { status });
             onRefresh();
             onClose();
         } catch (e) {
@@ -37,11 +34,9 @@ const ListingModal = ({ listing, onClose, onRefresh }) => {
     };
 
     const details = [
-        ['Breed', listing.breed || ' '],
-        ['Age', listing.age || ' '],
-        ['Gender', listing.gender || ' '],
-        ['Price', listing.price === 0 ? 'Free Adoption' : `₹${listing.price}`],
-        ['Location', listing.city || ' '],
+        ['Product', listing.name || ' '],
+        ['Brand', listing.brand || ' '],
+        ['Price', listing.sellingPrice === 0 ? 'Free' : `₹${listing.sellingPrice}`],
         ['Status', <span className="badge">{listing.status?.toUpperCase()}</span>],
     ];
 
@@ -110,7 +105,7 @@ const ListingModal = ({ listing, onClose, onRefresh }) => {
                                 if (window.confirm('Are you sure you want to permanently delete this listing?')) {
                                     setActioning(true);
                                     try {
-                                        await api.delete(`/admin/listings/${listing.id}`);
+                                        await api.delete(`/products/${listing.id}`);
                                         onRefresh();
                                         onClose();
                                     } catch (e) { alert('Failed to delete'); }
@@ -128,7 +123,7 @@ const ListingModal = ({ listing, onClose, onRefresh }) => {
     );
 };
 
-export default function Listings() {
+export default function Products() {
     const [listings, setListings] = useState([]);
     const [filtered, setFiltered] = useState([]);
     const [tab, setTab] = useState('pending');
@@ -140,9 +135,9 @@ export default function Listings() {
         setLoading(true);
         try {
             const status = tab === 'all' ? '' : tab;
-            const res = await api.get(`/admin/listings?type=sale&status=${status}`);
-            setListings(res.data.listings || []);
-            setFiltered(res.data.listings || []);
+            const res = await api.get(`/products?status=${status}`);
+            setListings(res.data.products || []);
+            setFiltered(res.data.products || []);
         } catch (e) {
             console.error('Failed to fetch listings:', e);
         } finally {
@@ -161,27 +156,27 @@ export default function Listings() {
         }
         const r = listings.filter(b =>
             b.id?.includes(search) ||
-            (b.breed || '').toLowerCase().includes(search.toLowerCase()) ||
-            (b.city || '').toLowerCase().includes(search.toLowerCase())
+            (b.name || '').toLowerCase().includes(search.toLowerCase()) ||
+            (b.brand || '').toLowerCase().includes(search.toLowerCase())
         );
         setFiltered(r);
     }, [search, listings]);
 
     return (
         <div>
-            <TopBar title="Listings Management" />
+            <TopBar title="Products Management" />
             <div className="page-content">
                 <div className="page-header">
                     <div>
                         <h2 className="page-title">Moderation Queue</h2>
-                        <p className="page-subtitle">Manage and verify dog listings before they go live.</p>
+                        <p className="page-subtitle">Manage and verify product listings before they go live.</p>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                     <div className="search-bar" style={{ flex: 1, minWidth: 280, maxWidth: 400 }}>
                         <Search size={15} />
-                        <input placeholder="Search breed or ID..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input placeholder="Search product name or ID..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                     <div className="tabs">
                         {['all', 'pending', 'active', 'sold', 'rejected'].map(t => (
@@ -195,7 +190,7 @@ export default function Listings() {
                 {loading ? <div className="loading-center"><div className="spinner" /></div> : (
                     <div className="table-wrapper">
                         <table>
-                            <thead><tr><th>Photo</th><th>Breed</th><th>Location</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Photo</th><th>Product Name</th><th>Brand</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody>
                                 {filtered.length === 0 ? (
                                     <tr><td colSpan={6}><div className="empty-state"><Tag size={32} /><h3>No listings found</h3></div></td></tr>
@@ -203,12 +198,12 @@ export default function Listings() {
                                     <tr key={l.id} style={{ cursor: 'pointer' }} onClick={() => setSelected(l)}>
                                         <td>
                                             <div style={{ position: 'relative', width: 44, height: 44 }}>
-                                                <img src={l.photos?.[0] || 'https://via.placeholder.com/150'} alt="Dog" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                                                <img src={l.images?.[0] || 'https://via.placeholder.com/150'} alt="Product" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                                             </div>
                                         </td>
-                                        <td style={{ fontWeight: 600 }}>{l.breed || '—'}</td>
-                                        <td>{l.city || '—'}</td>
-                                        <td>{l.price === 0 ? 'Free' : `₹${l.price}`}</td>
+                                        <td style={{ fontWeight: 600 }}>{l.name || '—'}</td>
+                                        <td>{l.brand || '—'}</td>
+                                        <td>{l.sellingPrice === 0 ? 'Free' : `₹${l.sellingPrice}`}</td>
                                         <td><span className="badge">{l.status}</span></td>
                                         <td><button className="btn btn-outline btn-sm" onClick={() => setSelected(l)}>Review</button></td>
                                     </tr>

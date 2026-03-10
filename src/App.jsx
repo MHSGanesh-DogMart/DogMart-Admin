@@ -25,6 +25,8 @@ import ServiceBookings from './pages/ServiceBookings';
 import Support from './pages/Support';
 import Banners from './pages/Banners';
 import FCMManager from './components/FCMManager';
+import Products from './pages/Products';
+import Services from './pages/Services';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -56,6 +58,8 @@ function AppRoutes() {
       <Route path="/sellers" element={<ProtectedRoute><AdminLayout><Sellers /></AdminLayout></ProtectedRoute>} />
       <Route path="/service-providers" element={<ProtectedRoute><AdminLayout><ServiceProviders /></AdminLayout></ProtectedRoute>} />
       <Route path="/listings" element={<ProtectedRoute><AdminLayout><Listings /></AdminLayout></ProtectedRoute>} />
+      <Route path="/products" element={<ProtectedRoute><AdminLayout><Products /></AdminLayout></ProtectedRoute>} />
+      <Route path="/services" element={<ProtectedRoute><AdminLayout><Services /></AdminLayout></ProtectedRoute>} />
       <Route path="/banners" element={<ProtectedRoute><AdminLayout><Banners /></AdminLayout></ProtectedRoute>} />
       <Route path="/breeds" element={<ProtectedRoute><AdminLayout><Breeds /></AdminLayout></ProtectedRoute>} />
       <Route path="/categories" element={<ProtectedRoute><AdminLayout><Categories /></AdminLayout></ProtectedRoute>} />

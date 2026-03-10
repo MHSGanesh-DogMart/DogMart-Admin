@@ -37,7 +37,7 @@ const ListingModal = ({ listing, onClose, onRefresh }) => {
     };
 
     const details = [
-        ['Breed', listing.breed || ' '],
+        ['Title', listing.title || ' '],
         ['Age', listing.age || ' '],
         ['Gender', listing.gender || ' '],
         ['Price', listing.price === 0 ? 'Free Adoption' : `₹${listing.price}`],
@@ -128,7 +128,7 @@ const ListingModal = ({ listing, onClose, onRefresh }) => {
     );
 };
 
-export default function Listings() {
+export default function Services() {
     const [listings, setListings] = useState([]);
     const [filtered, setFiltered] = useState([]);
     const [tab, setTab] = useState('pending');
@@ -140,7 +140,7 @@ export default function Listings() {
         setLoading(true);
         try {
             const status = tab === 'all' ? '' : tab;
-            const res = await api.get(`/admin/listings?type=sale&status=${status}`);
+            const res = await api.get(`/admin/listings?type=service&status=${status}`);
             setListings(res.data.listings || []);
             setFiltered(res.data.listings || []);
         } catch (e) {
@@ -161,7 +161,7 @@ export default function Listings() {
         }
         const r = listings.filter(b =>
             b.id?.includes(search) ||
-            (b.breed || '').toLowerCase().includes(search.toLowerCase()) ||
+            (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
             (b.city || '').toLowerCase().includes(search.toLowerCase())
         );
         setFiltered(r);
@@ -169,19 +169,19 @@ export default function Listings() {
 
     return (
         <div>
-            <TopBar title="Listings Management" />
+            <TopBar title="Services Management" />
             <div className="page-content">
                 <div className="page-header">
                     <div>
                         <h2 className="page-title">Moderation Queue</h2>
-                        <p className="page-subtitle">Manage and verify dog listings before they go live.</p>
+                        <p className="page-subtitle">Manage and verify service listings before they go live.</p>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                     <div className="search-bar" style={{ flex: 1, minWidth: 280, maxWidth: 400 }}>
                         <Search size={15} />
-                        <input placeholder="Search breed or ID..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input placeholder="Search title or ID..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
                     <div className="tabs">
                         {['all', 'pending', 'active', 'sold', 'rejected'].map(t => (
@@ -195,7 +195,7 @@ export default function Listings() {
                 {loading ? <div className="loading-center"><div className="spinner" /></div> : (
                     <div className="table-wrapper">
                         <table>
-                            <thead><tr><th>Photo</th><th>Breed</th><th>Location</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Photo</th><th>Service</th><th>Location</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody>
                                 {filtered.length === 0 ? (
                                     <tr><td colSpan={6}><div className="empty-state"><Tag size={32} /><h3>No listings found</h3></div></td></tr>
@@ -206,7 +206,7 @@ export default function Listings() {
                                                 <img src={l.photos?.[0] || 'https://via.placeholder.com/150'} alt="Dog" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                                             </div>
                                         </td>
-                                        <td style={{ fontWeight: 600 }}>{l.breed || '—'}</td>
+                                        <td style={{ fontWeight: 600 }}>{l.title || '—'}</td>
                                         <td>{l.city || '—'}</td>
                                         <td>{l.price === 0 ? 'Free' : `₹${l.price}`}</td>
                                         <td><span className="badge">{l.status}</span></td>

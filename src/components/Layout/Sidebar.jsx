@@ -11,7 +11,9 @@ import {
 const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/users', icon: Users, label: 'Users' },
-    { to: '/listings', icon: Tag, label: 'Listings Moderation' },
+    { to: '/listings', icon: Tag, label: 'Pets Moderation' },
+    { to: '/services', icon: Scissors, label: 'Services Moderation' },
+    { to: '/products', icon: ShoppingBag, label: 'Products Management' },
     { to: '/banners', icon: Image, label: 'Promo Banners' },
     { to: '/sellers', icon: Star, label: 'Sellers Verification' },
     { to: '/service-providers', icon: Briefcase, label: 'Service Providers' },
