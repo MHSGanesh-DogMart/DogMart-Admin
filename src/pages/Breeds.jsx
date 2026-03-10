@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import TopBar from '../components/Layout/TopBar';
-import { db } from '../firebase/config';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
-import { Plus, Pencil, Trash2, X, Tag, Info } from 'lucide-react';
+import api from '../utils/api';
+import { Plus, Pencil, Trash2, X, Tag } from 'lucide-react';
 
-function BreedForm({ breed, categories, onSave, onClose, existingBreeds }) {
+function BreedForm({ breed, categories, onSave, onClose }) {
     const [form, setForm] = useState(breed || {
         name: '',
         size: 'Medium',
@@ -22,23 +21,11 @@ function BreedForm({ breed, categories, onSave, onClose, existingBreeds }) {
         setSaving(true);
         try {
             if (breed?.id) {
-                await updateDoc(doc(db, 'breeds', breed.id), { ...form, updatedAt: serverTimestamp() });
+                await api.put(`/breeds/${breed.id}`, form);
                 onSave({ ...form, id: breed.id });
             } else {
-                // Find next numeric ID
-                let nextId = 1;
-                if (existingBreeds && existingBreeds.length > 0) {
-                    const ids = existingBreeds.map(b => parseInt(b.id)).filter(id => !isNaN(id));
-                    if (ids.length > 0) {
-                        nextId = Math.max(...ids) + 1;
-                    }
-                }
-
-                const idStr = String(nextId);
-                const ref = doc(db, 'breeds', idStr);
-                const newBreed = { ...form, id: idStr, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-                await setDoc(ref, newBreed);
-                onSave(newBreed);
+                const res = await api.post('/breeds', form);
+                onSave(res.data.breed);
             }
             onClose();
         } catch (e) {
@@ -88,12 +75,12 @@ function BreedForm({ breed, categories, onSave, onClose, existingBreeds }) {
                     </div>
                 </div>
                 <div className="form-group">
-                    <label className="form-label">Temperament (comma separated)</label>
+                    <label className="form-label">Temperament</label>
                     <textarea className="form-textarea" value={form.temperament} onChange={e => set('temperament', e.target.value)} placeholder="e.g. Playful, Intelligent, Friendly" rows={2} />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                     <button className={`toggle ${form.isActive ? 'on' : ''}`} onClick={() => set('isActive', !form.isActive)} />
-                    <span className="text-sm">{form.isActive ? 'Active - Selectable in app' : 'Inactive - Hidden from selection'}</span>
+                    <span className="text-sm">{form.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     <button className="btn btn-primary" onClick={handleSave} disabled={saving || !form.name.trim()} style={{ flex: 1, justifyContent: 'center' }}>
@@ -113,42 +100,32 @@ export default function Breeds() {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                const catsSnap = await getDocs(query(collection(db, 'categories'), orderBy('name', 'asc')));
-                const catsData = catsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                setCategories(catsData);
-
-                const breedsSnap = await getDocs(query(collection(db, 'breeds'), orderBy('name', 'asc')));
-                const breedsData = breedsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                setBreeds(breedsData);
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAll();
-    }, []);
-
-    const handleSave = (breed) => {
-        setBreeds(prev => {
-            const exists = prev.find(c => c.id === breed.id);
-            let arr;
-            if (exists) {
-                arr = prev.map(c => c.id === breed.id ? breed : c);
-            } else {
-                arr = [breed, ...prev];
-            }
-            return arr.sort((a, b) => a.name.localeCompare(b.name));
-        });
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [breedsRes, catsRes] = await Promise.all([
+                api.get('/breeds'),
+                api.get('/categories')
+            ]);
+            setBreeds(breedsRes.data.breeds || []);
+            setCategories(catsRes.data.categories || []);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleSave = () => fetchData();
+
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this breed? It may be linked to existing listings.')) return;
+        if (!confirm('Are you sure you want to delete this breed?')) return;
         try {
-            await deleteDoc(doc(db, 'breeds', id));
+            await api.delete(`/breeds/${id}`);
             setBreeds(prev => prev.filter(c => c.id !== id));
         } catch (e) {
             console.error(e);
@@ -156,10 +133,10 @@ export default function Breeds() {
         }
     };
 
-    const handleToggle = async (breed) => {
+    const handleToggle = async (id) => {
         try {
-            await updateDoc(doc(db, 'breeds', breed.id), { isActive: !breed.isActive, updatedAt: serverTimestamp() });
-            setBreeds(prev => prev.map(c => c.id === breed.id ? { ...c, isActive: !c.isActive } : c));
+            await api.patch(`/breeds/${id}/toggle`);
+            setBreeds(prev => prev.map(c => c.id === id ? { ...c, isActive: !c.isActive } : c));
         } catch (e) {
             console.error(e);
             alert('Failed to toggle status');
@@ -168,12 +145,12 @@ export default function Breeds() {
 
     return (
         <div>
-            <TopBar title="Breeds Master" />
+            <TopBar title="Breeds Options" />
             <div className="page-content">
                 <div className="page-header">
                     <div>
                         <h2 className="page-title">Breeds Master List</h2>
-                        <p className="page-subtitle">Manage the dropdown list of dog breeds available to sellers and buyers in the app.</p>
+                        <p className="page-subtitle">Manage dog breeds and pricing benchmarks for the app.</p>
                     </div>
                     <button className="btn btn-primary" onClick={() => { setFormBreed(null); setShowForm(true); }}>
                         <Plus size={15} /> Add Breed
@@ -183,8 +160,7 @@ export default function Breeds() {
                     breeds.length === 0 ? (
                         <div className="empty-state">
                             <Tag size={40} />
-                            <h3>No breeds in master list</h3>
-                            <p className="text-sm">Add your first dog breed to populate the app's dropdowns.</p>
+                            <h3>No breeds found</h3>
                         </div>
                     ) : (
                         <div className="table-wrapper">
@@ -192,10 +168,9 @@ export default function Breeds() {
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Breed Name</th>
+                                        <th>Name</th>
                                         <th>Category</th>
                                         <th>Size</th>
-                                        <th>Avg Price Range</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
@@ -203,11 +178,10 @@ export default function Breeds() {
                                 <tbody>
                                     {breeds.map(breed => (
                                         <tr key={breed.id}>
-                                            <td className="text-muted" style={{ fontWeight: 600 }}>#{breed.id}</td>
+                                            <td className="text-muted">#{breed.id}</td>
                                             <td style={{ fontWeight: 600 }}>{breed.name}</td>
                                             <td>{categories.find(c => c.id === breed.categoryId)?.name || 'Unknown'}</td>
                                             <td>{breed.size}</td>
-                                            <td> {breed.avgPriceMin || breed.avgPriceMax ? `₹${breed.avgPriceMin} - ₹${breed.avgPriceMax}` : " "} </td>
                                             <td>
                                                 <span className={`badge ${breed.isActive ? 'badge-success' : 'badge-danger'}`}>
                                                     {breed.isActive ? "Active" : "Hidden"}
@@ -215,7 +189,7 @@ export default function Breeds() {
                                             </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                                    <button className={`toggle ${breed.isActive ? "on" : ""}`} onClick={() => handleToggle(breed)} title="Toggle active in app" />
+                                                    <button className={`toggle ${breed.isActive ? "on" : ""}`} onClick={() => handleToggle(breed.id)} />
                                                     <button className="btn btn-outline btn-sm" onClick={() => { setFormBreed(breed); setShowForm(true); }}>
                                                         <Pencil size={13} />
                                                     </button>
@@ -232,7 +206,7 @@ export default function Breeds() {
                     )
                 }
             </div>
-            {showForm && <BreedForm breed={formBreed} categories={categories} onSave={handleSave} onClose={() => setShowForm(false)} existingBreeds={breeds} />}
+            {showForm && <BreedForm breed={formBreed} categories={categories} onSave={handleSave} onClose={() => setShowForm(false)} />}
         </div>
     );
 }

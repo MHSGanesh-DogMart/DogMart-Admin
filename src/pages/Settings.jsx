@@ -4,8 +4,18 @@ import { auth } from '../firebase/config';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { Shield, User, Bell, Sliders } from 'lucide-react';
 
+const Section = ({ icon: Icon, title, children }) => (
+    <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-light)' }}><Icon size={17} /></div>
+            <h3 style={{ fontWeight: 700 }}>{title}</h3>
+        </div>
+        {children}
+    </div>
+);
+
 export default function Settings() {
-    const [profile, setProfile] = useState({ name: 'Admin', bio: 'DogMart Platform Administrator', phone: '+91 00000 00000' });
+    const [profile, setProfile] = useState({ name: 'Admin', bio: 'DogMart Platform Administrator', phone: '+91 00000 00000', email: 'support@dogmart.com' });
     const [appSettings, setAppSettings] = useState({
         maxFreeListings: 3,
         subscriptionPrice: 99,
@@ -20,7 +30,49 @@ export default function Settings() {
     const [pwdMsg, setPwdMsg] = useState('');
     const [saved, setSaved] = useState(false);
 
-    const handleSaveProfile = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+    React.useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('http://localhost:3001/api/settings');
+                const data = await res.json();
+                if (data.settings) {
+                    setProfile(p => ({
+                        ...p,
+                        phone: data.settings.supportPhone || p.phone,
+                        email: data.settings.supportEmail || p.email,
+                    }));
+                    setAppSettings(a => ({
+                        ...a,
+                        maxFreeListings: data.settings.maxFreeListings !== undefined ? Number(data.settings.maxFreeListings) : a.maxFreeListings,
+                        subscriptionPrice: data.settings.subscriptionPrice !== undefined ? Number(data.settings.subscriptionPrice) : a.subscriptionPrice,
+                        listingExpiryDays: data.settings.listingExpiryDays !== undefined ? Number(data.settings.listingExpiryDays) : a.listingExpiryDays
+                    }));
+                }
+            } catch (e) { console.error("Could not fetch settings", e); }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSaveProfile = async () => {
+        try {
+            const token = await auth.currentUser?.getIdToken();
+            await fetch('http://localhost:3001/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    settings: {
+                        supportPhone: profile.phone,
+                        supportEmail: profile.email,
+                        maxFreeListings: appSettings.maxFreeListings.toString(),
+                        subscriptionPrice: appSettings.subscriptionPrice.toString(),
+                        listingExpiryDays: appSettings.listingExpiryDays.toString()
+                    }
+                })
+            });
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (e) { console.error("Could not save settings", e); }
+    };
     const setA = (k, v) => setAppSettings(p => ({ ...p, [k]: v }));
     const setN = (k) => setNotifications(p => ({ ...p, [k]: !p[k] }));
 
@@ -37,16 +89,6 @@ export default function Settings() {
         } catch (e) { setPwdMsg('❌ ' + e.message); }
     };
 
-    const Section = ({ icon: Icon, title, children }) => (
-        <div className="card" style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-light)' }}><Icon size={17} /></div>
-                <h3 style={{ fontWeight: 700 }}>{title}</h3>
-            </div>
-            {children}
-        </div>
-    );
-
     return (
         <div>
             <TopBar title="Settings" />
@@ -54,10 +96,15 @@ export default function Settings() {
                 <div className="page-header"><div><h2 className="page-title">Platform Settings</h2><p className="page-subtitle">Manage admin profile, pricing rules, and access control.</p></div></div>
 
                 <Section icon={User} title="Admin Profile">
-                    <div className="form-group"><label className="form-label">Admin Name</label><input className="form-input" value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} /></div>
-                    <div className="form-group"><label className="form-label">Role / Bio</label><textarea className="form-textarea" value={profile.bio} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} rows={2} /></div>
-                    <div className="form-group"><label className="form-label">Support Phone Number</label><input className="form-input" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} /></div>
-                    <button className="btn btn-primary" onClick={handleSaveProfile}>{saved ? '✅ Saved!' : 'Save Profile'}</button>
+                    <div className="grid-2">
+                        <div className="form-group"><label className="form-label">Admin Name</label><input className="form-input" value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} /></div>
+                        <div className="form-group"><label className="form-label">Role / Bio</label><textarea className="form-textarea" value={profile.bio} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} rows={2} /></div>
+                    </div>
+                    <div className="grid-2">
+                        <div className="form-group"><label className="form-label">Support Phone Number</label><input className="form-input" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} /></div>
+                        <div className="form-group"><label className="form-label">Support Email Address</label><input className="form-input" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} /></div>
+                    </div>
+                    <button className="btn btn-primary" onClick={handleSaveProfile}>{saved ? '✅ Saved!' : 'Save Support Contacts'}</button>
                 </Section>
 
                 <Section icon={Sliders} title="DogMart Rules & Pricing">
@@ -78,7 +125,7 @@ export default function Settings() {
                             <div className="text-xs text-muted" style={{ marginTop: 4 }}>Auto-hide old active listings.</div>
                         </div>
                     </div>
-                    <button className="btn btn-primary" onClick={handleSaveProfile}>Save App Settings</button>
+                    <button className="btn btn-primary" onClick={handleSaveProfile}>{saved ? '✅ Saved!' : 'Save App Settings'}</button>
                     <div className="text-xs text-muted" style={{ marginTop: 12 }}>Note: Changes to these settings will apply immediately to all clients.</div>
                 </Section>
 

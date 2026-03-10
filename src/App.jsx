@@ -11,6 +11,8 @@ import Sellers from './pages/Sellers';
 import ServiceProviders from './pages/ServiceProviders';
 import Breeds from './pages/Breeds';
 import Categories from './pages/Categories';
+import ProductCategories from './pages/ProductCategories';
+import ServiceCategories from './pages/ServiceCategories';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
@@ -21,6 +23,7 @@ import Payments from './pages/Payments';
 import Settings from './pages/Settings';
 import ServiceBookings from './pages/ServiceBookings';
 import Support from './pages/Support';
+import Banners from './pages/Banners';
 import FCMManager from './components/FCMManager';
 
 const ProtectedRoute = ({ children }) => {
@@ -53,8 +56,11 @@ function AppRoutes() {
       <Route path="/sellers" element={<ProtectedRoute><AdminLayout><Sellers /></AdminLayout></ProtectedRoute>} />
       <Route path="/service-providers" element={<ProtectedRoute><AdminLayout><ServiceProviders /></AdminLayout></ProtectedRoute>} />
       <Route path="/listings" element={<ProtectedRoute><AdminLayout><Listings /></AdminLayout></ProtectedRoute>} />
+      <Route path="/banners" element={<ProtectedRoute><AdminLayout><Banners /></AdminLayout></ProtectedRoute>} />
       <Route path="/breeds" element={<ProtectedRoute><AdminLayout><Breeds /></AdminLayout></ProtectedRoute>} />
       <Route path="/categories" element={<ProtectedRoute><AdminLayout><Categories /></AdminLayout></ProtectedRoute>} />
+      <Route path="/product-categories" element={<ProtectedRoute><AdminLayout><ProductCategories /></AdminLayout></ProtectedRoute>} />
+      <Route path="/service-categories" element={<ProtectedRoute><AdminLayout><ServiceCategories /></AdminLayout></ProtectedRoute>} />
       <Route path="/subscriptions" element={<ProtectedRoute><AdminLayout><Subscriptions /></AdminLayout></ProtectedRoute>} />
       <Route path="/locations" element={<ProtectedRoute><AdminLayout><Locations /></AdminLayout></ProtectedRoute>} />
       <Route path="/reviews" element={<ProtectedRoute><AdminLayout><Reviews /></AdminLayout></ProtectedRoute>} />

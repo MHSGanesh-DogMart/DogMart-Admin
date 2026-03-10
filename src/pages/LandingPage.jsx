@@ -1,16 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Scissors, MapPin, Search, CalendarCheck, HelpCircle, Heart, Star, Phone, MessageSquare, Mail, Award, Clock, Users, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Shield, Scissors, MapPin, Search, CalendarCheck,
+    HelpCircle, Heart, Star, Phone, MessageSquare,
+    Mail, Award, Clock, Users, CheckCircle, ArrowRight,
+    ChevronDown, Menu, X, Play
+} from 'lucide-react';
 import { db } from '../firebase/config';
 import { collection, addDoc } from 'firebase/firestore';
+import { tokens } from '../styles/DesignTokens';
+
+const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeOut" }
+};
+
+const staggerContainer = {
+    animate: {
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const GlassCard = ({ children, style = {}, delay = 0 }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay }}
+        whileHover={{ y: -5, boxShadow: tokens.shadows.lg }}
+        style={{
+            background: tokens.colors.glass.bg,
+            backdropFilter: 'blur(12px)',
+            borderRadius: '24px',
+            border: `1px solid ${tokens.colors.glass.border}`,
+            boxShadow: tokens.shadows.glass,
+            padding: '32px',
+            cursor: 'pointer',
+            ...style
+        }}
+    >
+        {children}
+    </motion.div>
+);
 
 export default function LandingPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('privacy');
-
-    // Contact Form State
+    const [scrolled, setScrolled] = useState(false);
     const [contact, setContact] = useState({ name: '', email: '', phone: '', comment: '' });
     const [submitStatus, setSubmitStatus] = useState({ loading: false, success: false, error: '' });
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleContactSubmit = async (e) => {
         e.preventDefault();
@@ -31,336 +78,434 @@ export default function LandingPage() {
     };
 
     return (
-        <div style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#1E293B', background: '#FFFCF9', overflowX: 'hidden' }}>
+        <div style={{
+            fontFamily: '"Outfit", sans-serif',
+            color: tokens.colors.neutral.text,
+            background: tokens.colors.neutral.bg,
+            overflowX: 'hidden'
+        }}>
 
-            {/* Header */}
-            <header style={{
-                position: 'fixed', top: 0, width: '100%', padding: '20px 5%',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(12px)',
-                zIndex: 1000, boxShadow: '0 4px 30px rgba(0,0,0,0.03)'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        width: 40, height: 40, borderRadius: 12,
-                        background: 'linear-gradient(135deg, #FF7B54, #FFB26B)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Heart size={20} color="white" fill="white" />
-                    </div>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: '"Outfit", sans-serif', color: '#FF7B54' }}>DogMart</span>
+            {/* Animated Mesh Background */}
+            <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                zIndex: -1,
+                background: `radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+                            radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.1) 0px, transparent 50%),
+                            radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%)`,
+                opacity: 0.8
+            }} />
+
+            {/* Navbar */}
+            <motion.header
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                style={{
+                    position: 'fixed', top: scrolled ? '20px' : '0', left: '50%',
+                    width: scrolled ? '90%' : '100%',
+                    transform: 'translateX(-50%)',
+                    padding: scrolled ? '12px 32px' : '20px 5%',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'transparent',
+                    backdropFilter: scrolled ? 'blur(20px)' : 'none',
+                    zIndex: 1000,
+                    borderRadius: scrolled ? '100px' : '0',
+                    boxShadow: scrolled ? tokens.shadows.md : 'none',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => window.scrollTo(0, 0)}>
+                    <motion.div
+                        whileHover={{ scale: 1.1, rotate: 10 }}
+                        style={{
+                            width: 36, height: 36, borderRadius: 10,
+                            background: tokens.colors.accent.gradient,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                    >
+                        <Heart size={18} color="white" fill="white" />
+                    </motion.div>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: tokens.colors.neutral.text }}>DogMart</span>
                 </div>
-                <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                    <a href="#features" style={{ textDecoration: 'none', color: '#475569', fontWeight: 600 }}>Features</a>
-                    <a href="#contact" style={{ textDecoration: 'none', color: '#475569', fontWeight: 600 }}>Support</a>
-                    <button style={{ background: 'none', border: 'none', color: '#475569', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => navigate('/privacy')}>Privacy</button>
-                    <button style={{ background: 'none', border: 'none', color: '#475569', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => navigate('/terms')}>Terms</button>
-                    <button style={{ background: 'linear-gradient(135deg, #FF7B54, #E0603B)', border: 'none', color: 'white', padding: '10px 20px', borderRadius: '50px', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 123, 84, 0.2)' }} onClick={() => navigate('/login')}>Admin Portal</button>
-                </div>
-            </header>
+
+                <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                    <a href="#features" style={{ textDecoration: 'none', color: tokens.colors.neutral.text, fontWeight: 600, fontSize: '0.9rem' }}>Features</a>
+                    <a href="#contact" style={{ textDecoration: 'none', color: tokens.colors.neutral.text, fontWeight: 600, fontSize: '0.9rem' }}>Support</a>
+                    <button
+                        onClick={() => navigate('/login')}
+                        style={{
+                            background: tokens.colors.neutral.text,
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 24px',
+                            borderRadius: '100px',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                    >
+                        Admin Login
+                    </button>
+                </nav>
+            </motion.header>
 
             {/* Hero Section */}
             <section style={{
                 minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '120px 5% 60px',
-                background: 'radial-gradient(circle at top right, #FFF1EB 0%, #FFFCF9 100%)',
-                position: 'relative'
+                position: 'relative', overflow: 'hidden'
             }}>
-                <div style={{ flex: 1, maxWidth: 650 }}>
-                    <h1 style={{ fontSize: '4.5rem', fontWeight: 800, fontFamily: '"Outfit", sans-serif', lineHeight: 1.1, marginBottom: '24px' }}>
-                        Trusted Locals for Your <span style={{ color: '#FF7B54' }}>Best Friend.</span>
-                    </h1>
-                    <p style={{ fontSize: '1.25rem', color: '#64748B', marginBottom: '40px', lineHeight: 1.6 }}>
-                        Discover and book verified pet groomers, walkers, and loving boarders in your neighborhood. The ultimate ecosystem for pet parents.
-                    </p>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                        <button style={{
-                            padding: '16px 32px', background: 'linear-gradient(135deg, #FF7B54, #E0603B)',
-                            color: 'white', border: 'none', borderRadius: '50px', fontSize: '1.1rem',
-                            fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px',
-                            boxShadow: '0 10px 25px rgba(255, 123, 84, 0.3)'
+                <div style={{ flex: 1, maxWidth: 700, zIndex: 1 }}>
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <span style={{
+                            background: `${tokens.colors.primary.main}15`,
+                            color: tokens.colors.primary.main,
+                            padding: '8px 16px',
+                            borderRadius: '100px',
+                            fontSize: '0.9rem',
+                            fontWeight: 700,
+                            marginBottom: '24px',
+                            display: 'inline-block'
                         }}>
-                            Download App
-                        </button>
-                        <button style={{
-                            padding: '16px 32px', background: 'white', color: '#1E293B',
-                            border: '2px solid #E2E8F0', borderRadius: '50px', fontSize: '1.1rem',
-                            fontWeight: 700, cursor: 'pointer'
+                            ✨ Redefining Pet Care Architecture
+                        </span>
+                        <h1 style={{
+                            fontSize: 'calc(3rem + 2vw)',
+                            fontWeight: 800,
+                            lineHeight: 1.05,
+                            marginBottom: '24px',
+                            letterSpacing: '-0.02em'
                         }}>
-                            Watch Video
-                        </button>
-                    </div>
+                            Premium Care for your <br />
+                            <span style={{
+                                background: tokens.colors.primary.gradient,
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent'
+                            }}>Loyal Companion</span>.
+                        </h1>
+                        <p style={{ fontSize: '1.2rem', color: tokens.colors.neutral.muted, marginBottom: '40px', lineHeight: 1.6, maxWidth: 550 }}>
+                            Manage the ultimate ecosystem for pet parents with our state-of-the-art administrative terminal. Secure, intuitive, and lightning fast.
+                        </p>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                style={{
+                                    padding: '18px 36px', background: tokens.colors.primary.gradient,
+                                    color: 'white', border: 'none', borderRadius: '100px', fontSize: '1.05rem',
+                                    fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px',
+                                    boxShadow: '0 12px 24px rgba(59, 130, 246, 0.2)'
+                                }}
+                            >
+                                Get Started <ArrowRight size={20} />
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ background: '#f1f5f9' }}
+                                style={{
+                                    padding: '18px 36px', background: 'transparent', color: tokens.colors.neutral.text,
+                                    border: `2px solid ${tokens.colors.neutral.border}`, borderRadius: '100px', fontSize: '1.05rem',
+                                    fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px'
+                                }}
+                            >
+                                <div style={{ width: 32, height: 32, borderRadius: '50%', background: tokens.colors.neutral.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Play size={14} fill="currentColor" />
+                                </div>
+                                Watch Demo
+                            </motion.button>
+                        </div>
+                    </motion.div>
                 </div>
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                    <div style={{ fontSize: '200px', filter: 'drop-shadow(0 30px 40px rgba(255,123,84,0.15))', animation: 'float 6s ease-in-out infinite' }}>
-                        🐕
-                    </div>
+
+                <div style={{ flex: 1, position: 'relative', height: '600px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <motion.div
+                        animate={{
+                            y: [0, -20, 0],
+                            rotate: [0, 2, 0]
+                        }}
+                        transition={{
+                            duration: 6,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        style={{ position: 'relative', zIndex: 1 }}
+                    >
+                        <div style={{ fontSize: '150px', filter: 'drop-shadow(0 40px 60px rgba(59,130,246,0.2))' }}>🐕</div>
+                    </motion.div>
+
+                    {/* Floating Tech Elements */}
+                    {[...Array(3)].map((_, i) => (
+                        <motion.div
+                            key={i}
+                            animate={{
+                                y: [0, 30, 0],
+                                x: [0, 20, 0]
+                            }}
+                            transition={{
+                                duration: 8 + i,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                                delay: i * 2
+                            }}
+                            style={{
+                                position: 'absolute',
+                                width: 100 + i * 50,
+                                height: 100 + i * 50,
+                                borderRadius: '50%',
+                                background: i % 2 === 0 ? tokens.colors.primary.main : tokens.colors.accent.main,
+                                filter: 'blur(80px)',
+                                opacity: 0.1,
+                                top: `${20 + i * 20}%`,
+                                left: `${10 + i * 30}%`
+                            }}
+                        />
+                    ))}
                 </div>
             </section>
 
-            {/* Features Section */}
-            <section id="features" style={{ padding: '100px 5%', background: 'white' }}>
-                <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                    <h2 style={{ fontSize: '3rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#1E293B', marginBottom: '16px' }}>
-                        Everything Your Pet Needs
-                    </h2>
-                    <p style={{ fontSize: '1.25rem', color: '#64748B' }}>All in one beautifully crafted mobile experience.</p>
-                </div>
-
+            {/* Stats Grid */}
+            <section style={{ padding: '0 5% 100px' }}>
                 <div style={{
-                    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', maxWidth: 1200, margin: '0 auto'
+                    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px'
                 }}>
                     {[
-                        { icon: Scissors, color: '#EC4899', title: 'Expert Grooming', desc: 'From basic baths to breed-specific styling, book professional grooming sessions right at your doorstep. We ensure a relaxing spa day for your furry friend.' },
-                        { icon: MapPin, color: '#3B82F6', title: 'Verified Walkers', desc: 'Ensure your dog gets their daily exercise with our network of vetted, trackable dog walkers. Perfect for busy pet parents needing reliable daily care.' },
-                        { icon: CalendarCheck, color: '#10B981', title: 'Loving Boarding', desc: 'Going out of town? Find cozy, cage-free homes in your neighborhood for stress-free boarding stays where your dog is treated like family.' },
-                        { icon: Search, color: '#F59E0B', title: 'Pet Marketplace', desc: 'Looking for a new family member? Browse adorable breeds safely from verified breeders and rescues committed to ethical practices.' }
-                    ].map((feat, idx) => (
-                        <div key={idx} style={{
-                            padding: '40px 30px', background: '#FFFCF9', borderRadius: '24px',
-                            border: '1px solid #F1F5F9', transition: 'transform 0.3s, box-shadow 0.3s',
-                            cursor: 'default'
-                        }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.transform = 'translateY(-10px)';
-                                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.05)';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }}>
-                            <div style={{
-                                width: 60, height: 60, borderRadius: 16, background: `${feat.color}15`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px'
-                            }}>
-                                <feat.icon size={28} color={feat.color} />
-                            </div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '12px' }}>{feat.title}</h3>
-                            <p style={{ color: '#64748B', lineHeight: 1.6 }}>{feat.desc}</p>
+                        { label: 'Active Users', value: '12k+' },
+                        { label: 'Verified Pros', value: '450+' },
+                        { label: 'Daily Bookings', value: '2.8k' },
+                        { label: 'User Satisfaction', value: '99.9%' }
+                    ].map((stat, i) => (
+                        <div key={i} style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: tokens.colors.neutral.text }}>{stat.value}</div>
+                            <div style={{ color: tokens.colors.neutral.muted, fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase' }}>{stat.label}</div>
                         </div>
                     ))}
                 </div>
             </section>
 
-            {/* App Preview Section */}
-            <section id="app" style={{
-                padding: '100px 5%', background: '#F8FAFC', display: 'flex', alignItems: 'center',
-                justifyContent: 'space-between', gap: '60px', flexWrap: 'wrap-reverse', margin: '0 auto'
-            }}>
-                <div style={{ flex: 1, minWidth: 320, maxWidth: 600 }}>
-                    <h2 style={{ fontSize: '3.5rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#1E293B', marginBottom: '24px', lineHeight: 1.1 }}>
-                        Premium. Fast.<br />Secure.
-                    </h2>
-                    <p style={{ fontSize: '1.25rem', color: '#64748B', marginBottom: '32px', lineHeight: 1.6 }}>
-                        DogMart is built natively to provide a buttery-smooth experience. Manage your "My Dogs" wallet, chat with service providers in real-time, and track your bookings with absolute confidence.
-                    </p>
-                    <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '16px', padding: 0 }}>
-                        <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.1rem', fontWeight: 600, color: '#1E293B' }}>
-                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>✓</div> Real-time Socket.IO Chat
-                        </li>
-                        <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.1rem', fontWeight: 600, color: '#1E293B' }}>
-                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>✓</div> Aadhaar Verified Providers
-                        </li>
-                        <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.1rem', fontWeight: 600, color: '#1E293B' }}>
-                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>✓</div> Secure Razorpay Payments
-                        </li>
-                    </ul>
+            {/* Features Section */}
+            <section id="features" style={{ padding: '100px 5%' }}>
+                <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+                    <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px' }}
+                    >
+                        Experience the <span style={{ color: tokens.colors.primary.main }}>Difference</span>
+                    </motion.h2>
+                    <p style={{ fontSize: '1.2rem', color: tokens.colors.neutral.muted }}>Modular. Scaleable. Beautiful by design.</p>
                 </div>
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '30px', minWidth: 320, padding: '40px 0' }}>
-                    <div style={{
-                        width: 250, height: 500, background: 'linear-gradient(135deg, #FF7B54, #FFB26B)',
-                        borderRadius: 40, border: '10px solid #222', boxShadow: '0 30px 60px rgba(0,0,0,0.15)',
-                        display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white',
-                        fontSize: '2rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800,
-                        transform: 'translateY(30px) rotate(-5deg)', transition: 'transform 0.3s'
-                    }}>
-                        Feed
-                    </div>
-                    <div style={{
-                        width: 250, height: 500, background: 'linear-gradient(135deg, #4A90E2, #50E3C2)',
-                        borderRadius: 40, border: '10px solid #222', boxShadow: '0 30px 60px rgba(0,0,0,0.15)',
-                        display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white',
-                        fontSize: '2rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800,
-                        transform: 'translateY(-30px) rotate(5deg)', transition: 'transform 0.3s'
-                    }}>
-                        Booking
-                    </div>
+
+                <div style={{
+                    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', maxWidth: 1400, margin: '0 auto'
+                }}>
+                    {[
+                        { icon: Scissors, color: '#EC4899', title: 'Smart Scheduling', desc: 'Predictive algorithm for grooming sessions that optimizes provider routes and reduces wait times.' },
+                        { icon: MapPin, color: '#3B82F6', title: 'Live Tracking', desc: 'Precision GPS monitoring for walkers with instant arrival notifications and digital handoff.' },
+                        { icon: Shield, color: '#10B981', title: 'Trust-Link™ Tech', desc: 'Biometric and Aadhaar-backed verification protocol ensuring zero-compromise safety standards.' },
+                        { icon: Award, color: '#F59E0B', title: 'Dynamic Rating', desc: 'Weighted reputation system that elevates top-tier performers and ensures consistent quality.' }
+                    ].map((feat, idx) => (
+                        <GlassCard key={idx} delay={idx * 0.1}>
+                            <div style={{
+                                width: 56, height: 56, borderRadius: '16px', background: `${feat.color}15`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px'
+                            }}>
+                                <feat.icon size={24} color={feat.color} />
+                            </div>
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px' }}>{feat.title}</h3>
+                            <p style={{ color: tokens.colors.neutral.muted, lineHeight: 1.6 }}>{feat.desc}</p>
+                        </GlassCard>
+                    ))}
                 </div>
             </section>
 
-            {/* Why DogMart Section */}
-            <section style={{ padding: '100px 5%', background: '#FFF1EB' }}>
-                <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                        <h2 style={{ fontSize: '3rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#1E293B', marginBottom: '16px' }}>
-                            Why Pet Parents Love DogMart
+            {/* Dashboard Preview */}
+            <section style={{ padding: '100px 5%', background: '#0F172A', color: 'white', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', alignItems: 'center', gap: '80px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 400 }}>
+                        <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '24px', lineHeight: 1.1 }}>
+                            Full-Stack Control at your <span style={{ color: tokens.colors.primary.light }}>Fingertips</span>
                         </h2>
-                        <p style={{ fontSize: '1.25rem', color: '#64748B', maxWidth: 700, margin: '0 auto' }}>
-                            We go beyond just being a booking app. DogMart is a comprehensive ecosystem designed around the specific needs of dogs and the people who love them.
+                        <p style={{ fontSize: '1.2rem', opacity: 0.7, marginBottom: '40px', lineHeight: 1.6 }}>
+                            The DogMart Admin Dashboard provides real-time insights into your pet care network. Monitor revenue, manage disputes, and oversee global operations from a single unified interface.
                         </p>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
-                        <div style={{ background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
-                            <Shield size={40} color="#10B981" style={{ marginBottom: '20px' }} />
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Rigorous Safety Standards</h3>
-                            <p style={{ color: '#64748B', lineHeight: 1.7 }}>
-                                Every service provider on DogMart goes through a strict verification process, including government ID checks (Aadhaar). We ensure that only passionate, qualified individuals handle your precious pets.
-                            </p>
-                        </div>
-                        <div style={{ background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
-                            <Award size={40} color="#F59E0B" style={{ marginBottom: '20px' }} />
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Premium Pet Profiles</h3>
-                            <p style={{ color: '#64748B', lineHeight: 1.7 }}>
-                                Build a detailed "My Dogs" profile tracking your pet's breed, temperament, dietary needs, and medical history. Providers receive this dossier instantly when you book, ensuring personalized care from minute one.
-                            </p>
-                        </div>
-                        <div style={{ background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
-                            <MessageSquare size={40} color="#3B82F6" style={{ marginBottom: '20px' }} />
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Real-time Reassurance</h3>
-                            <p style={{ color: '#64748B', lineHeight: 1.7 }}>
-                                Stay connected with our lightning-fast, Socket.io powered in-app chat. Receive photo updates during boarding stays, check in on walks, and coordinate with groomers without ever leaving the app.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* How It Works Section */}
-            <section style={{ padding: '100px 5%', background: 'white' }}>
-                <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                        <h2 style={{ fontSize: '3rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#1E293B', marginBottom: '16px' }}>
-                            How DogMart Works
-                        </h2>
-                        <p style={{ fontSize: '1.25rem', color: '#64748B' }}>Four simple steps to superior pet care.</p>
-                    </div>
-
-                    <div style={{ position: 'relative' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {[
-                                { step: '01', title: 'Create Your Pet\'s Profile', desc: 'Add your dogs, their dietary preferences, and any special behavioral notes so providers know exactly how to care for them.' },
-                                { step: '02', title: 'Discover Local Pros', desc: 'Browse available groomers, walkers, and boarders in your immediate area. Filter by ratings, services, and availability.' },
-                                { step: '03', title: 'Book & Pay Securely', desc: 'Select your preferred time slot and confirm the booking instantly with our secure Razorpay integration. No cash handling needed.' },
-                                { step: '04', title: 'Relax & Review', desc: 'Enjoy peace of mind while your pet is cared for. Afterward, leave a review to help build the DogMart community trust.' }
-                            ].map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
-                                    <div style={{
-                                        minWidth: '60px', height: '60px', borderRadius: '50%', background: '#FF7B54',
-                                        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '1.5rem', fontWeight: 800, fontFamily: '"Outfit", sans-serif'
-                                    }}>
-                                        {item.step}
+                                'Real-time Analytics Engine',
+                                'Automated Payout Processing',
+                                'Global Listing Management',
+                                'Direct Support Integration'
+                            ].map((item, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: tokens.colors.primary.main, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <CheckCircle size={14} color="white" />
                                     </div>
-                                    <div>
-                                        <h3 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '12px', color: '#1E293B' }}>{item.title}</h3>
-                                        <p style={{ fontSize: '1.1rem', color: '#64748B', lineHeight: 1.6 }}>{item.desc}</p>
-                                    </div>
+                                    <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>{item}</span>
                                 </div>
                             ))}
                         </div>
+                    </div>
+                    <div style={{ flex: 1, position: 'relative' }}>
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            whileInView={{ scale: 1, opacity: 1 }}
+                            style={{
+                                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                borderRadius: '24px',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                padding: '12px',
+                                boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+                            }}
+                        >
+                            <img
+                                src="https://images.unsplash.com/photo-1551288049-bbbda536339a?auto=format&fit=crop&q=80&w=2000"
+                                alt="Dashboard Preview"
+                                style={{ width: '100%', borderRadius: '16px', display: 'block' }}
+                            />
+                        </motion.div>
+                        {/* Floating Micro-cards */}
+                        <motion.div
+                            animate={{ y: [0, -15, 0] }}
+                            transition={{ duration: 4, repeat: Infinity }}
+                            style={{
+                                position: 'absolute', top: '-40px', right: '-20px',
+                                background: tokens.colors.accent.gradient,
+                                padding: '20px', borderRadius: '20px', boxShadow: tokens.shadows.lg
+                            }}
+                        >
+                            <div style={{ fontWeight: 800 }}>+ ₹45,200</div>
+                            <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Today's Volume</div>
+                        </motion.div>
                     </div>
                 </div>
             </section>
 
             {/* Support Form Section */}
-            <section id="contact" style={{ padding: '100px 5%', background: 'white' }}>
-                <div style={{ maxWidth: 800, margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-                        <h2 style={{ fontSize: '3rem', fontFamily: '"Outfit", sans-serif', fontWeight: 800, color: '#1E293B', marginBottom: '16px' }}>
-                            We're Here to Help
+            <section id="contact" style={{ padding: '120px 5%' }}>
+                <div style={{
+                    maxWidth: 1000, margin: '0 auto',
+                    background: 'white', borderRadius: '48px',
+                    padding: '60px', boxShadow: '0 20px 80px rgba(0,0,0,0.03)',
+                    display: 'flex', gap: '60px', flexWrap: 'wrap'
+                }}>
+                    <div style={{ flex: 1, minWidth: 300 }}>
+                        <h2 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '24px', color: tokens.colors.neutral.text }}>
+                            How can we <br /><span style={{ color: tokens.colors.primary.main }}>Help you</span>?
                         </h2>
-                        <p style={{ fontSize: '1.1rem', color: '#64748B' }}>
-                            Got a question or need support with your booking? Reach out to our dedicated team.
+                        <p style={{ color: tokens.colors.neutral.muted, marginBottom: '40px', fontSize: '1.1rem' }}>
+                            Our engineering and support teams are on standby 24/7 to assist with your technical or operational queries.
                         </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ width: 50, height: 50, borderRadius: '16px', background: `${tokens.colors.primary.main}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Mail size={24} color={tokens.colors.primary.main} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 700 }}>Email Protocol</div>
+                                    <div style={{ color: tokens.colors.neutral.muted }}>support@dogmart.io</div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ width: 50, height: 50, borderRadius: '16px', background: `${tokens.colors.accent.main}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <MessageSquare size={24} color={tokens.colors.accent.main} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 700 }}>Neural Chat</div>
+                                    <div style={{ color: tokens.colors.neutral.muted }}>Available 24/7 on WhatsApp</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div style={{ background: 'white', padding: '40px', borderRadius: '30px', boxShadow: '0 20px 40px rgba(0,0,0,0.03)' }}>
+                    <div style={{ flex: 1.2, minWidth: 300 }}>
                         {submitStatus.success && (
-                            <div style={{ background: '#D1FAE5', color: '#065F46', padding: '16px', borderRadius: '12px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <HelpCircle size={20} /> Message sent successfully! We'll get back to you soon.
-                            </div>
+                            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: '#D1FAE5', color: '#065F46', padding: '16px', borderRadius: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
+                                <CheckCircle size={20} /> Request transmitted successfully.
+                            </motion.div>
                         )}
-                        {submitStatus.error && (
-                            <div style={{ background: '#FEE2E2', color: '#991B1B', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
-                                {submitStatus.error}
-                            </div>
-                        )}
-
                         <form onSubmit={handleContactSubmit}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Your Name*</label>
-                                    <input
-                                        type="text" required value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })}
-                                        style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none', background: '#F8FAFC' }}
-                                        placeholder="John Doe"
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Phone Number</label>
-                                    <input
-                                        type="tel" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })}
-                                        style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none', background: '#F8FAFC' }}
-                                        placeholder="+91 90000 00000"
-                                    />
-                                </div>
-                            </div>
-                            <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>Email Address*</label>
                                 <input
-                                    type="email" required value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })}
-                                    style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none', background: '#F8FAFC' }}
-                                    placeholder="john@example.com"
+                                    type="text" required placeholder="Full Name" value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })}
+                                    style={{ width: '100%', padding: '16px 24px', borderRadius: '16px', border: `1px solid ${tokens.colors.neutral.border}`, outline: 'none', background: '#F8FAFC', fontSize: '1rem' }}
+                                />
+                                <input
+                                    type="tel" placeholder="Contact Terminal" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })}
+                                    style={{ width: '100%', padding: '16px 24px', borderRadius: '16px', border: `1px solid ${tokens.colors.neutral.border}`, outline: 'none', background: '#F8FAFC', fontSize: '1rem' }}
                                 />
                             </div>
-                            <div style={{ marginBottom: '30px' }}>
-                                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>How can we help?*</label>
-                                <textarea
-                                    required rows={4} value={contact.comment} onChange={e => setContact({ ...contact, comment: e.target.value })}
-                                    style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none', background: '#F8FAFC', resize: 'vertical' }}
-                                    placeholder="Write your message here..."
-                                />
-                            </div>
-                            <button
+                            <input
+                                type="email" required placeholder="Digital ID (Email)" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })}
+                                style={{ width: '100%', padding: '16px 24px', borderRadius: '16px', border: `1px solid ${tokens.colors.neutral.border}`, outline: 'none', background: '#F8FAFC', fontSize: '1rem', marginBottom: '20px' }}
+                            />
+                            <textarea
+                                required rows={4} placeholder="Detailed Request" value={contact.comment} onChange={e => setContact({ ...contact, comment: e.target.value })}
+                                style={{ width: '100%', padding: '16px 24px', borderRadius: '16px', border: `1px solid ${tokens.colors.neutral.border}`, outline: 'none', background: '#F8FAFC', resize: 'none', fontSize: '1rem', marginBottom: '30px' }}
+                            />
+                            <motion.button
+                                whileHover={{ scale: 1.02, boxShadow: tokens.shadows.lg }}
+                                whileTap={{ scale: 0.98 }}
                                 type="submit" disabled={submitStatus.loading}
                                 style={{
-                                    width: '100%', padding: '16px', background: '#FF7B54', color: 'white',
-                                    border: 'none', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 700,
-                                    cursor: submitStatus.loading ? 'not-allowed' : 'pointer', transition: 'background 0.3s',
-                                    opacity: submitStatus.loading ? 0.7 : 1
+                                    width: '100%', padding: '18px', background: tokens.colors.neutral.text, color: 'white',
+                                    border: 'none', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 800,
+                                    cursor: 'pointer', transition: 'all 0.3s'
                                 }}
                             >
-                                {submitStatus.loading ? 'Sending...' : 'Send Message'}
-                            </button>
+                                {submitStatus.loading ? 'Transmitting...' : 'Send Request'}
+                            </motion.button>
                         </form>
                     </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer style={{ background: '#1E293B', color: 'white', padding: '60px 5% 40px', textAlign: 'center' }}>
-                <h2 style={{ fontFamily: '"Outfit", sans-serif', fontSize: '2.5rem', marginBottom: '20px', color: '#FF7B54' }}>DogMart</h2>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '40px', color: '#94A3B8' }}>
-                    <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</a>
-                    <span>•</span>
-                    <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</a>
-                    <span>•</span>
-                    <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Support</a>
+            <footer style={{ background: '#0F172A', color: 'white', padding: '80px 5% 40px', position: 'relative' }}>
+                <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '40px' }}>
+                    <div style={{ maxWidth: 300 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ width: 32, height: 32, borderRadius: 8, background: tokens.colors.accent.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Heart size={16} color="white" fill="white" />
+                            </div>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>DogMart</span>
+                        </div>
+                        <p style={{ opacity: 0.6, lineHeight: 1.6 }}>The comprehensive administrative terminal for modern pet care networks.</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '80px', flexWrap: 'wrap' }}>
+                        <div>
+                            <div style={{ fontWeight: 800, marginBottom: '20px' }}>Platform</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: 0.6 }}>
+                                <a href="#" style={{ color: 'white', textDecoration: 'none' }}>Admin API</a>
+                                <a href="#" style={{ color: 'white', textDecoration: 'none' }}>Network Health</a>
+                                <a href="#" style={{ color: 'white', textDecoration: 'none' }}>Security Protocols</a>
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: 800, marginBottom: '20px' }}>Legal</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', opacity: 0.6 }}>
+                                <a href="#" style={{ color: 'white', textDecoration: 'none' }}>Privacy Policy</a>
+                                <a href="#" style={{ color: 'white', textDecoration: 'none' }}>Terms of Service</a>
+                                <a href="#" style={{ color: 'white', textDecoration: 'none' }}>GDPR Compliance</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p style={{ color: '#64748B' }}>© 2026 DogMart App. All rights reserved.</p>
+                <div style={{ maxWidth: 1400, margin: '60px auto 0', paddingTop: '40px', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', opacity: 0.4, fontSize: '0.9rem' }}>
+                    © 2026 DogMart Systems Inc. Built with Premium Design Intelligence.
+                </div>
             </footer>
 
             <style>{`
-                @keyframes float {
-                    0% { transform: translateY(0px) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(5deg); }
-                    100% { transform: translateY(0px) rotate(0deg); }
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
+                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+                
                 html { scroll-behavior: smooth; }
+                ::selection { background: ${tokens.colors.primary.main}40; color: ${tokens.colors.neutral.text}; }
+                
+                scrollbar-width: thin;
+                scrollbar-color: ${tokens.colors.neutral.border} transparent;
             `}</style>
         </div>
     );
