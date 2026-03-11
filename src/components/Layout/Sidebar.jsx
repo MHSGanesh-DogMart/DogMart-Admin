@@ -5,19 +5,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { tokens } from '../../styles/DesignTokens';
 import {
     LayoutDashboard, Users, CalendarDays, Tag, MapPin, Image,
-    Star, CreditCard, AlertTriangle, Settings, LogOut, Heart, Layers, Grid, Briefcase, Scissors, Mail, ChevronRight, ShoppingBag
+    Star, CreditCard, AlertTriangle, Settings, LogOut, Heart, Layers, Grid, Briefcase, Scissors, Mail, ChevronRight, ShoppingBag, Bell
 } from 'lucide-react';
 
 const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/users', icon: Users, label: 'Users' },
     { to: '/listings', icon: Tag, label: 'Pets Moderation' },
-    { to: '/services', icon: Scissors, label: 'Services Moderation' },
     { to: '/products', icon: ShoppingBag, label: 'Products Management' },
-    { to: '/banners', icon: Image, label: 'Promo Banners' },
-    { to: '/sellers', icon: Star, label: 'Sellers Verification' },
-    { to: '/service-providers', icon: Briefcase, label: 'Service Providers' },
+    { to: '/services', icon: Scissors, label: 'Services Moderation' },
     { to: '/service-bookings', icon: Scissors, label: 'Service Bookings' },
+    { to: '/banners', icon: Image, label: 'Promo Banners' },
     { to: '/categories', icon: Grid, label: 'Pet Categories' },
     { to: '/product-categories', icon: ShoppingBag, label: 'Product Categories' },
     { to: '/service-categories', icon: Scissors, label: 'Service Types' },
@@ -27,6 +25,7 @@ const navItems = [
     { to: '/payments', icon: CreditCard, label: 'Payments' },
     { to: '/locations', icon: MapPin, label: 'Locations' },
     { to: '/support', icon: Mail, label: 'Support Inbox' },
+    { to: '/notifications', icon: Bell, label: 'Push Notifications' },
     { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

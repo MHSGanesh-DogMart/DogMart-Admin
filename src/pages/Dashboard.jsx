@@ -121,10 +121,10 @@ export default function Dashboard() {
                     <>
                         <div className="grid-5" style={{ marginBottom: 32 }}>
                             <StatCard index={0} label="Total Users" value={stats.users} icon={Users} color="orange" />
-                            <StatCard index={1} label="Pending Listings" value={stats.listings} icon={CalendarDays} color="orange" />
-                            <StatCard index={2} label="Active Listings" value={stats.active} icon={TrendingUp} color="orange" />
-                            <StatCard index={3} label="Unresolved Reports" value={stats.reports} icon={AlertTriangle} color="red" />
-                            <StatCard index={4} label="Monthly Revenue" value={`₹${stats.earnings.toLocaleString()}`} icon={IndianRupee} color="orange" />
+                            <StatCard index={1} label="Active Pets" value={stats.active} icon={TrendingUp} color="orange" />
+                            <StatCard index={2} label="Active Products" value={stats.products || 0} icon={ShoppingBag} color="orange" />
+                            <StatCard index={3} label="Active Subscriptions" value={stats.subs || 0} icon={CalendarDays} color="orange" />
+                            <StatCard index={4} label="Unresolved Reports" value={stats.reports} icon={AlertTriangle} color="red" />
                         </div>
 
                         {stats.reports > 0 && (

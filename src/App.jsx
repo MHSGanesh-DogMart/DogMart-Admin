@@ -7,8 +7,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Listings from './pages/Listings';
-import Sellers from './pages/Sellers';
-import ServiceProviders from './pages/ServiceProviders';
 import Breeds from './pages/Breeds';
 import Categories from './pages/Categories';
 import ProductCategories from './pages/ProductCategories';
@@ -27,6 +25,7 @@ import Banners from './pages/Banners';
 import FCMManager from './components/FCMManager';
 import Products from './pages/Products';
 import Services from './pages/Services';
+import Notifications from './pages/Notifications';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -55,8 +54,6 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/dashboard" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><AdminLayout><Users /></AdminLayout></ProtectedRoute>} />
-      <Route path="/sellers" element={<ProtectedRoute><AdminLayout><Sellers /></AdminLayout></ProtectedRoute>} />
-      <Route path="/service-providers" element={<ProtectedRoute><AdminLayout><ServiceProviders /></AdminLayout></ProtectedRoute>} />
       <Route path="/listings" element={<ProtectedRoute><AdminLayout><Listings /></AdminLayout></ProtectedRoute>} />
       <Route path="/products" element={<ProtectedRoute><AdminLayout><Products /></AdminLayout></ProtectedRoute>} />
       <Route path="/services" element={<ProtectedRoute><AdminLayout><Services /></AdminLayout></ProtectedRoute>} />
@@ -71,6 +68,7 @@ function AppRoutes() {
       <Route path="/payments" element={<ProtectedRoute><AdminLayout><Payments /></AdminLayout></ProtectedRoute>} />
       <Route path="/service-bookings" element={<ProtectedRoute><AdminLayout><ServiceBookings /></AdminLayout></ProtectedRoute>} />
       <Route path="/support" element={<ProtectedRoute><AdminLayout><Support /></AdminLayout></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><AdminLayout><Notifications /></AdminLayout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><AdminLayout><Settings /></AdminLayout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
