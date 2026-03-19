@@ -15,7 +15,7 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 export default function Settings() {
-    const [profile, setProfile] = useState({ name: 'Admin', bio: 'PetSaathi Platform Administrator', phone: '+91 00000 00000', email: 'support@petsaathi.com' });
+    const [profile, setProfile] = useState({ name: 'Admin', bio: 'PetSaathi Platform Administrator', phone: '+91 00000 00000', email: 'hemanthtech517@gmail.com' });
     const [appSettings, setAppSettings] = useState({
         maxFreeListings: 3,
         subscriptionPrice: 99,

@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getDatabase } from "firebase/database";
 
-// Firebase configuration for PetPal Hub
+// Firebase configuration for PetSaathi
 const firebaseConfig = {
     apiKey: "AIzaSyCY3N4BzymXctBDuMcsRN_QvJ_0p7MrM1M",
     authDomain: "dog-mart-846bc.firebaseapp.com",

@@ -376,7 +376,7 @@ export default function LandingPage() {
                                 </div>
                                 <div>
                                     <div style={{ fontWeight: 700 }}>Email Protocol</div>
-                                    <div style={{ color: tokens.colors.neutral.muted }}>support@dogmart.io</div>
+                                    <div style={{ color: tokens.colors.neutral.muted }}>hemanthtech517@gmail.com</div>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>

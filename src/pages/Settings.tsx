@@ -32,7 +32,7 @@ export default function Settings() {
     subscriptionPrice: 99,
     listingExpiryDays: 30,
     supportPhone: '+91 00000 00000',
-    supportEmail: 'support@petsaathi.com'
+    supportEmail: 'hemanthtech517@gmail.com'
   });
   const [pwd, setPwd] = useState({ current: '', newPwd: '', confirm: '' });
   const [saving, setSaving] = useState(false);
@@ -47,7 +47,7 @@ export default function Settings() {
           subscriptionPrice: Number(res.data.settings.subscriptionPrice || 99),
           listingExpiryDays: Number(res.data.settings.listingExpiryDays || 30),
           supportPhone: res.data.settings.supportPhone || '+91 00000 00000',
-          supportEmail: res.data.settings.supportEmail || 'support@petsaathi.com'
+          supportEmail: res.data.settings.supportEmail || 'hemanthtech517@gmail.com'
         });
       }
     } catch (e) {

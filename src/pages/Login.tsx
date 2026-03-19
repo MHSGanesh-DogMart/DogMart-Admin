@@ -60,7 +60,7 @@ const Login = () => {
           >
             <Heart size={32} className="text-white fill-white" />
           </motion.div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">PetPal Hub</h1>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">PetSaathi Admin</h1>
           <p className="text-muted-foreground text-sm font-semibold">Administrative Access Only</p>
         </motion.div>
 
@@ -92,7 +92,7 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@petpal.app"
+                  placeholder="admin@petsaathi.app"
                   className="w-full pl-12 pr-4 py-3 rounded-2xl bg-background border border-border focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   required
                 />
@@ -156,7 +156,7 @@ const Login = () => {
                   </ul>
                   <div className="p-2 bg-white rounded-lg border border-border flex items-center gap-2">
                     <ShieldCheck size={14} className="text-green-500" />
-                    <span>Default: <code className="font-bold">admin@dogmart.app</code> / <code className="font-bold">admin123</code></span>
+                    <span>Default: <code className="font-bold">admin@petsaathi.app</code> / <code className="font-bold">admin123</code></span>
                   </div>
                 </motion.div>
               )}
@@ -165,7 +165,7 @@ const Login = () => {
         </motion.div>
 
         <p className="text-center mt-10 text-[11px] text-muted-foreground font-semibold">
-          © 2026 PetPal Hub • Built with Premium Design Intelligence
+          © 2026 PetSaathi Admin • Built with Premium Design Intelligence
         </p>
       </div>
     </div>
