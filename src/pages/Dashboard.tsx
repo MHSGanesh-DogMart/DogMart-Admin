@@ -10,6 +10,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import api from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { toast } from "sonner";
 
 const data = [
   { day: "Mon", earnings: 4500, users: 400 },
@@ -21,14 +26,32 @@ const data = [
   { day: "Sun", earnings: 6800, users: 700 },
 ];
 
-const statsData = [
-  { label: "Total Users", value: "12,450", icon: Users, color: "text-blue-500", trend: "+12%", up: true },
-  { label: "Active Pets", value: "854", icon: TrendingUp, color: "text-orange-500", trend: "+5%", up: true },
-  { label: "Active Products", value: "1,204", icon: ShoppingBag, color: "text-green-500", trend: "+18%", up: true },
-  { label: "Subscriptions", value: "342", icon: CalendarDays, color: "text-purple-500", trend: "+2%", up: true },
-];
 
 const Dashboard = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/admin/stats');
+        setStats(res.data);
+      } catch (error) {
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const statsCards = [
+    { label: "Total Users", value: stats?.users || 0, icon: Users, color: "text-blue-500", trend: "+12%", up: true },
+    { label: "Active Pets", value: stats?.activePets || 0, icon: TrendingUp, color: "text-orange-500", trend: "+5%", up: true },
+    { label: "Active Products", value: stats?.activeProducts || 0, icon: ShoppingBag, color: "text-green-500", trend: "+18%", up: true },
+    { label: "Subscriptions", value: stats?.subs || 0, icon: CalendarDays, color: "text-purple-500", trend: "+2%", up: true },
+  ];
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -48,7 +71,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsData.map((stat, i) => (
+        {statsCards.map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
@@ -62,10 +85,13 @@ const Dashboard = () => {
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className={`flex items-center text-xs mt-1 ${stat.up ? 'text-green-500' : 'text-red-500'}`}>
-                  {stat.up ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                  {stat.trend} from last month
+                {loading ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <div className="text-2xl font-bold">{stat.value.toLocaleString()}</div>
+                )}
+                <div className={`flex items-center text-xs mt-1 text-muted-foreground/60 italic`}>
+                  Live database count
                 </div>
               </CardContent>
             </Card>
@@ -131,38 +157,58 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground">Listings awaiting review.</p>
             </div>
             <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">
-              8 Pending
+              {stats?.pendingModeration || 0} Pending Items
             </span>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {[1, 2, 3, 4].map((item, i) => (
-                <div key={item} className="flex items-center justify-between group cursor-pointer hover:bg-muted/50 p-2 rounded-xl transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden">
-                      <img 
-                        src={`https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=150&h=150`} 
-                        alt="pet" 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
+              {loading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-2">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="w-12 h-12 rounded-xl" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-sm">German Shepherd</p>
-                      <p className="text-xs text-muted-foreground">₹25,000 • Sector 62, Noida</p>
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                  </div>
+                ))
+              ) : stats?.recentPending && stats.recentPending.length > 0 ? (
+                stats.recentPending.map((listing: any, i: number) => (
+                  <div key={listing.id} className="flex items-center justify-between group cursor-pointer hover:bg-muted/50 p-2 rounded-xl transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden">
+                        <img 
+                          src={listing.images?.[0] || `https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=150&h=150`} 
+                          alt="pet" 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm tracking-tight">{listing.breed || listing.title}</p>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground opacity-60">₹{(listing.price || 0).toLocaleString()} • {listing.city}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[9px] font-black px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-lg tracking-widest uppercase">Awaiting</span>
+                      <Link to="/moderation" className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-lg">PENDING</span>
-                    <button className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                      <ArrowUpRight className="h-4 w-4" />
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                   <CheckCircle className="w-10 h-10 mb-2" />
+                   <p className="text-xs font-bold uppercase tracking-widest">Queue Clear</p>
                 </div>
-              ))}
+              )}
             </div>
-            <button className="w-full mt-6 py-2 text-sm font-semibold text-primary hover:underline">
-              View All Pending Review →
-            </button>
+            <Link to="/moderation" className="block w-full text-center mt-6 py-2 text-xs font-black uppercase text-primary hover:underline tracking-widest">
+              Review Full Moderation Queue →
+            </Link>
           </CardContent>
         </Card>
       </div>

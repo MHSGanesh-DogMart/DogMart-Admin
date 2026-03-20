@@ -3,8 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Filter, Eye, CheckCircle, XCircle, 
   Trash2, ShoppingBag, Tag, ShieldCheck, 
-  ShieldAlert, AlertCircle, Package
+  ShieldAlert, AlertCircle, Package, Truck, 
+  RefreshCcw, Layers, ListChecks, ArrowLeft, ArrowRight
 } from "lucide-react";
+import { 
+  Carousel, CarouselContent, CarouselItem, 
+  CarouselPrevious, CarouselNext 
+} from "@/components/ui/carousel";
 import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,11 +27,31 @@ interface Product {
   name?: string;
   brand?: string;
   sellingPrice: number;
+  mrp?: number;
   description?: string;
   images?: string[];
   status: string;
   isFeatured?: boolean;
-  category?: string;
+  category?: { name: string; emoji: string };
+  subcategory?: { name: string };
+  suitableFor?: string[];
+  petSize?: string[];
+  ageGroup?: string[];
+  keyFeatures?: string[];
+  stock?: number;
+  deliveryCharge: number;
+  deliveryType: string;
+  deliveryFreeAbove?: number;
+  deliveryDays?: string;
+  returnPolicy: string;
+  hasVariants?: boolean;
+  variants?: {
+    id: number;
+    name: string;
+    mrp: number;
+    price: number;
+    stock: number;
+  }[];
 }
 
 export default function Products() {
@@ -197,7 +222,7 @@ export default function Products() {
                             </div>
                             <div>
                                 <p className="font-black text-sm tracking-tight text-foreground group-hover:text-primary transition-colors">{p.name || "Unnamed Product"}</p>
-                                <p className="text-[10px] font-black text-muted-foreground uppercase opacity-40">ITEM: {p.id.slice(-6)}</p>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase opacity-40">ITEM: {String(p.id).slice(-6)}</p>
                             </div>
                           </div>
                         </td>
@@ -231,79 +256,205 @@ export default function Products() {
             </div>
           )}
         </CardContent>
-      </Card>
-
-      {/* Product Detail Dialog */}
+      </Card>       {/* Product Detail Dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => {!o && setSelected(null); setRejectMode(false);}}>
-        <DialogContent className="max-w-2xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] bg-background">
+        <DialogContent className="max-w-4xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-3xl bg-background scrollbar-thin overflow-y-auto max-h-[90vh]">
            <div className="grid md:grid-cols-2">
-              <div className="relative h-full min-h-[400px]">
-                 <img 
-                   src={selected?.images?.[0] || ""} 
-                   className="absolute inset-0 w-full h-full object-cover" 
-                   alt="Product Hero"
-                 />
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="relative h-full min-h-[500px] bg-black">
+                 {((selected?.images)?.length || 0) > 0 ? (
+                    <Carousel className="w-full h-full group">
+                       <CarouselContent>
+                          {(selected?.images || []).map((img, i) => (
+                            <CarouselItem key={i} className="h-full">
+                               <img src={img} className="w-full h-[500px] object-fit" alt={`${selected?.name} - ${i}`} />
+                            </CarouselItem>
+                          ))}
+                       </CarouselContent>
+                       <CarouselPrevious className="left-4" />
+                       <CarouselNext className="right-4" />
+                    </Carousel>
+                 ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                       <Package className="w-16 h-16 text-muted-foreground opacity-20" />
+                    </div>
+                 )}
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
                  <div className="absolute bottom-10 left-10 right-10 text-white">
                     <p className="text-[10px] uppercase font-black tracking-[0.2em] opacity-80 mb-2">Inventory Management</p>
-                    <h2 className="text-3xl font-black leading-tight drop-shadow-lg">{selected?.name}</h2>
+                    <h2 className="text-4xl font-black leading-tight drop-shadow-lg">{selected?.name}</h2>
+                    <div className="flex gap-2 mt-4">
+                       <Badge className="bg-white/20 backdrop-blur-md text-white border-white/20 uppercase font-black text-[9px]">
+                          {selected?.category?.name || "CATALOG ITEM"}
+                       </Badge>
+                       {selected?.subcategory && (
+                          <Badge className="bg-primary text-white border-none uppercase font-black text-[9px]">
+                             {selected.subcategory.name}
+                          </Badge>
+                       )}
+                    </div>
                  </div>
               </div>
 
-              <div className="p-10 space-y-8 flex flex-col justify-center">
-                 <div className="space-y-2">
-                    <Badge className="bg-primary/10 text-primary border-none font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-widest">
-                       {selected?.status} Status
+              <div className="p-10 space-y-8 h-full bg-muted/5">
+                 <div className="flex justify-between items-start pt-2">
+                    <div className="space-y-1">
+                       <div className="flex items-baseline gap-3">
+                          <span className="text-5xl font-black text-primary font-display tracking-tight">₹{(selected?.sellingPrice || 0).toLocaleString()}</span>
+                          {selected?.mrp && selected.mrp > selected.sellingPrice && (
+                             <span className="text-muted-foreground line-through font-bold text-sm opacity-60">₹{selected.mrp.toLocaleString()}</span>
+                          )}
+                       </div>
+                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Price per Unit (incl. tax)</p>
+                    </div>
+                    <Badge variant={
+                       selected?.status === 'pending' ? 'warning' : 
+                       selected?.status === 'active' ? 'success' : 'destructive'
+                    } className="rounded-xl px-4 py-1.5 uppercase font-black text-[10px] shadow-sm tracking-widest">
+                       {selected?.status}
                     </Badge>
-                    <div className="flex items-baseline gap-2">
-                       <span className="text-4xl font-black text-primary font-display">₹{(selected?.sellingPrice || 0).toLocaleString()}</span>
-                       <span className="text-muted-foreground text-xs font-bold font-display ml-1">M.R.P</span>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-[2rem] bg-white border shadow-soft">
+                       <p className="text-[8px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">Brand Authority</p>
+                       <p className="font-black text-xs text-primary">{selected?.brand || "PetSaathi Direct"}</p>
+                    </div>
+                    <div className="p-4 rounded-[2rem] bg-white border shadow-soft">
+                       <p className="text-[8px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">In-Stock Capacity</p>
+                       <p className={`font-black text-xs ${selected?.stock && selected.stock < 10 ? 'text-destructive' : 'text-emerald-500'}`}>
+                          {selected?.stock || 0} Units
+                       </p>
                     </div>
                  </div>
 
-                 <div className="space-y-4">
-                    <div className="p-5 rounded-3xl bg-muted/30 border-2 border-muted border-dashed">
-                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 flex items-center gap-2">
-                          <Package className="w-3 h-3" /> Retail Description
+                 <div className="space-y-4 pt-2">
+                    <div className="flex flex-wrap gap-1.5">
+                       {selected?.suitableFor?.map(s => (
+                          <Badge key={s} variant="secondary" className="rounded-full px-3 py-1 text-[8px] font-black uppercase border-none bg-primary/5 text-primary">
+                             For: {s}
+                          </Badge>
+                       ))}
+                       {selected?.petSize?.map(s => (
+                          <Badge key={s} variant="secondary" className="rounded-full px-3 py-1 text-[8px] font-black uppercase border-none bg-muted-foreground/10 text-muted-foreground">
+                             Size: {s}
+                          </Badge>
+                       ))}
+                       {selected?.ageGroup?.map(s => (
+                          <Badge key={s} variant="outline" className="rounded-full px-3 py-1 text-[8px] font-black uppercase">
+                             Age: {s}
+                          </Badge>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-6 pt-4">
+                    <div>
+                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center gap-2">
+                          <Truck className="w-3 h-3 text-primary opacity-50" /> Fulfillment Details
                        </p>
-                       <p className="text-xs leading-relaxed font-bold text-muted-foreground italic">
-                          "{selected?.description || "No description provided for this listing."}"
+                       <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                          <div className="flex justify-between items-center text-[10px] font-bold pb-2 border-b">
+                             <span className="opacity-60 uppercase">Delivery Fee</span>
+                             <span className="font-black">{selected?.deliveryCharge === 0 ? "FREE" : `₹${selected?.deliveryCharge}`}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-bold pb-2 border-b">
+                             <span className="opacity-60 uppercase">Lead Time</span>
+                             <span className="font-black">{selected?.deliveryDays || "3-5 Days"}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-bold pb-2 border-b">
+                             <span className="opacity-60 uppercase">Returns</span>
+                             <span className="font-black">{String(selected?.returnPolicy).toUpperCase()}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-bold pb-2 border-b">
+                             <span className="opacity-60 uppercase">Strategy</span>
+                             <span className="font-black italic text-primary">{String(selected?.deliveryType).toUpperCase()}</span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="pt-2">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center gap-2">
+                       <ListChecks className="w-3 h-3 text-primary opacity-50" /> Competitive Advantages
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                       {selected?.keyFeatures?.map((f, i) => (
+                          <div key={i} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-bold border border-emerald-100 flex items-center gap-2">
+                             <CheckCircle className="w-3 h-3" /> {f}
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 {selected?.hasVariants && selected.variants && selected.variants.length > 0 && (
+                    <div className="pt-4 animate-in slide-in-from-bottom-2 duration-500">
+                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center gap-2">
+                          <Layers className="w-3 h-3 text-primary opacity-50" /> SKU Variants Matrix
                        </p>
+                       <div className="overflow-hidden border rounded-3xl bg-white shadow-inner">
+                          <table className="w-full text-[10px] text-left">
+                             <thead className="bg-muted/50 border-b">
+                                <tr>
+                                   <th className="px-5 py-3 font-black uppercase opacity-60">Variation</th>
+                                   <th className="px-5 py-3 font-black uppercase opacity-60">Price</th>
+                                   <th className="px-5 py-3 font-black uppercase opacity-60 text-right">Stock</th>
+                                </tr>
+                             </thead>
+                             <tbody>
+                                {selected.variants.map((v, i) => (
+                                   <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-muted/10"}>
+                                      <td className="px-5 py-3 font-bold">{v.name}</td>
+                                      <td className="px-5 py-3 font-black text-primary">₹{v.price.toLocaleString()}</td>
+                                      <td className={`px-5 py-3 font-black text-right ${v.stock < 5 ? 'text-destructive font-black' : 'opacity-60'}`}>{v.stock}</td>
+                                   </tr>
+                                ))}
+                             </tbody>
+                          </table>
+                       </div>
+                    </div>
+                 )}
+
+                 <div className="pt-6">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center gap-2">
+                       <Package className="w-3 h-3 text-primary opacity-50" /> Product Dossier
+                    </p>
+                    <div className="text-[11px] leading-relaxed font-bold text-muted-foreground italic bg-muted/20 p-6 rounded-[2rem] shadow-inner border">
+                       "{selected?.description || "No strategic overview provided for this catalog item."}"
                     </div>
                  </div>
 
                  {rejectMode ? (
-                   <div className="space-y-4 animate-in zoom-in-95 duration-300">
-                      <div className="bg-destructive/10 p-4 rounded-2xl border border-destructive/20 text-destructive text-[10px] font-black uppercase tracking-widest text-center">
-                         Action: Permanent Rejection
+                   <div className="space-y-4 animate-in zoom-in-95 duration-300 pt-6">
+                      <div className="bg-destructive/10 p-5 rounded-[2rem] border border-destructive/20 text-destructive text-[10px] font-black uppercase tracking-[0.2em] text-center italic">
+                         Action Sequence: Permanent Rejection
                       </div>
                       <textarea 
-                        className="w-full min-h-[80px] bg-muted/50 rounded-2xl p-4 text-xs font-black border-2 border-transparent focus:border-destructive outline-none transition-all placeholder:opacity-50"
-                        placeholder="Detail the reason for rejection..."
+                        className="w-full min-h-[100px] bg-muted/50 rounded-[2rem] p-6 text-xs font-black border-2 border-transparent focus:border-destructive outline-none transition-all placeholder:opacity-50"
+                        placeholder="Detail the technical reason for rejection..."
                         value={reason}
                         onChange={e => setReason(e.target.value)}
                       />
-                      <div className="flex gap-3">
+                      <div className="flex gap-4">
                          <Button 
                            disabled={actioning}
                            onClick={() => selected && handleStatusChange(selected.id, 'rejected', reason)}
-                           className="flex-1 rounded-2xl bg-destructive hover:bg-destructive/90 text-white font-black h-12"
+                           className="flex-1 rounded-2xl bg-destructive hover:bg-destructive/90 text-white font-black h-14 shadow-xl shadow-destructive/20"
                          >
-                            Confirm
+                            Confirm Deactivation
                          </Button>
-                         <Button variant="outline" onClick={() => setRejectMode(false)} className="rounded-2xl font-black h-12">Cancel</Button>
+                         <Button variant="outline" onClick={() => setRejectMode(false)} className="rounded-2xl font-black h-14 border-2">Cancel</Button>
                       </div>
                    </div>
                  ) : (
-                   <div className="space-y-3 pt-4">
+                   <div className="space-y-4 pt-10">
                      {selected?.status === 'pending' && (
-                       <div className="flex gap-3">
+                       <div className="flex gap-4">
                          <Button 
                            onClick={() => selected && handleStatusChange(selected.id, 'active')}
                            disabled={actioning}
-                           className="flex-1 h-14 rounded-2xl bg-primary text-white font-black shadow-xl shadow-primary/20 hover:scale-[1.02] transform transition-all active:scale-95"
+                           className="flex-1 h-14 rounded-2xl bg-primary text-white font-black shadow-2xl shadow-primary/30 hover:scale-[1.02] transform transition-all active:scale-95"
                          >
-                           <ShieldCheck className="w-5 h-5 mr-2" /> Approve
+                           <ShieldCheck className="w-5 h-5 mr-2" /> Authorize Listing
                          </Button>
                          <Button 
                            onClick={() => setRejectMode(true)}
@@ -311,16 +462,16 @@ export default function Products() {
                            variant="outline"
                            className="flex-1 h-14 rounded-2xl font-black border-2 border-destructive/20 text-destructive hover:bg-destructive/5"
                          >
-                           Reject
+                           Reject Item
                          </Button>
                        </div>
                      )}
                      <Button 
                        onClick={() => selected && handleDelete(selected.id)}
                        variant="ghost" 
-                       className="w-full h-12 rounded-2xl font-black text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
+                       className="w-full h-14 rounded-2xl font-black text-muted-foreground hover:text-white hover:bg-destructive transition-all group/del"
                      >
-                       <Trash2 className="w-4 h-4 mr-2" /> Remove Permanent
+                       <Trash2 className="w-4 h-4 mr-2 group-hover/del:animate-bounce" /> Expunge Permenantly
                      </Button>
                    </div>
                  )}

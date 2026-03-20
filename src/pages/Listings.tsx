@@ -3,8 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Filter, Eye, CheckCircle, XCircle, 
   Trash2, ExternalLink, Dog, Tag, ShieldCheck, 
-  ShieldAlert, MoreHorizontal, AlertCircle
+  ShieldAlert, MoreHorizontal, AlertCircle, MapPin, 
+  Phone, Syringe, ClipboardList, Ruler, Palette, Users2,
+  Clock
 } from "lucide-react";
+import { 
+  Carousel, CarouselContent, CarouselItem, 
+  CarouselPrevious, CarouselNext 
+} from "@/components/ui/carousel";
 import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,11 +30,21 @@ interface Listing {
   gender?: string;
   price: number;
   city?: string;
+  area?: string;
+  fullAddress?: string;
+  sellerPhone?: string;
   status: string;
   description?: string;
-  photos?: string[];
+  images?: string[];
+  photos?: string[]; // Fallback for some routes
+  isVaccinated?: boolean;
+  vetCertificateUrl?: string;
+  weight?: string;
+  color?: string;
+  puppyCount?: number;
   isFeatured?: boolean;
   adminNote?: string;
+  userId?: string;
 }
 
 export default function Listings() {
@@ -192,14 +208,14 @@ export default function Listings() {
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden border shadow-sm group-hover:shadow-md transition-shadow">
                               <img 
-                                src={l.photos?.[0] || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=150&h=150"} 
+                                src={(l.images?.[0] || l.photos?.[0]) || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=150&h=150"} 
                                 alt={l.breed} 
                                 className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
                               />
                             </div>
                             <div>
                                 <p className="font-bold text-sm tracking-tight">{l.breed || "Mixed Breed"}</p>
-                                <p className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-widest">{l.id.slice(-8)}</p>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-widest">{String(l.id).slice(-8)}</p>
                             </div>
                           </div>
                         </td>
@@ -231,45 +247,117 @@ export default function Listings() {
         </CardContent>
       </Card>
 
-      {/* Moderation Details Dialog */}
+       {/* Moderation Details Dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => {!o && setSelected(null); setRejectMode(false);}}>
-        <DialogContent className="max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-3xl bg-background outline-none">
-           <div className="relative h-64">
-              <img 
-                src={selected?.photos?.[0] || ""} 
-                className="w-full h-full object-cover" 
-                alt="Selected listing"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              <div className="absolute bottom-6 left-8 text-white">
-                 <h2 className="text-3xl font-black">{selected?.breed}</h2>
-                 <p className="opacity-80 font-bold tracking-tight">{selected?.city} • {selected?.age} Old</p>
+        <DialogContent className="max-w-3xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-3xl bg-background outline-none scrollbar-thin overflow-y-auto max-h-[90vh]">
+           <div className="relative h-80 bg-black">
+              {((selected?.images || selected?.photos)?.length || 0) > 0 ? (
+                <Carousel className="w-full h-full group">
+                   <CarouselContent>
+                      {(selected?.images || selected?.photos || []).map((img, i) => (
+                        <CarouselItem key={i}>
+                           <img src={img} className="w-full h-80 object-cover" alt={`${selected?.breed} - ${i}`} />
+                        </CarouselItem>
+                      ))}
+                   </CarouselContent>
+                   <CarouselPrevious className="left-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                   <CarouselNext className="right-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Carousel>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                   <Dog className="w-16 h-16 text-muted-foreground opacity-20" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+              <div className="absolute bottom-8 left-10 text-white">
+                 <Badge className="mb-3 bg-white/20 backdrop-blur-md text-white border-white/20 uppercase font-black text-[10px] tracking-widest">
+                    {selected?.status} PET
+                 </Badge>
+                 <h2 className="text-4xl font-black tracking-tighter">{selected?.breed || "Mixed Breed"}</h2>
+                 <p className="opacity-80 font-bold tracking-tight text-lg mt-1 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" /> {selected?.city} • {selected?.area}
+                 </p>
               </div>
-              <Badge className="absolute top-6 right-8 bg-white/20 backdrop-blur-md text-white border-white/20 uppercase font-black">
-                 {selected?.status}
-              </Badge>
            </div>
 
-           <div className="p-8 space-y-6">
-              <div className="grid grid-cols-3 gap-3">
+            <div className="p-10 space-y-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                  {[
-                   { label: "Price", val: selected?.price === 0 ? "FREE" : `₹${(selected?.price || 0).toLocaleString()}` },
-                   { label: "Gender", val: selected?.gender },
-                   { label: "Owner ID", val: selected?.id.slice(-6) }
+                   { label: "Price", val: selected?.price === 0 ? "FREE" : `₹${(selected?.price || 0).toLocaleString()}`, icon: Tag },
+                   { label: "Gender", val: selected?.gender, icon: Users2 },
+                   { label: "Age", val: selected?.age, icon: Clock },
+                   { label: "Weight", val: selected?.weight || "—", icon: Ruler }
                  ].map(i => (
-                   <div key={i.label} className="bg-muted/50 p-3 rounded-2xl border text-center">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">{i.label}</p>
-                      <p className="font-black text-sm text-primary">{i.val}</p>
+                   <div key={i.label} className="bg-muted/30 p-4 rounded-3xl border border-muted flex flex-col items-center justify-center gap-1 group hover:bg-white hover:shadow-soft transition-all duration-300">
+                      <i.icon className="w-5 h-5 text-primary opacity-40 group-hover:opacity-100 transition-all mb-1" />
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">{i.label}</p>
+                      <p className="font-black text-sm text-foreground">{i.val || "N/A"}</p>
                    </div>
                  ))}
               </div>
 
+              <div className="grid md:grid-cols-2 gap-8">
+                 <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                       <ShieldCheck className="w-4 h-4 text-primary" /> Health & Documentation
+                    </p>
+                    <div className="bg-muted/20 p-6 rounded-[2rem] border-2 border-dashed space-y-4">
+                       <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-muted-foreground uppercase">Vaccination Status</span>
+                          <Badge variant={selected?.isVaccinated ? "success" : "warning"} className="rounded-lg px-3 py-1 text-[10px] font-black">
+                             {selected?.isVaccinated ? "FULLY VACCINATED" : "NOT VACCINATED"}
+                          </Badge>
+                       </div>
+                       {selected?.vetCertificateUrl && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full rounded-xl font-bold bg-white shadow-sm gap-2"
+                            onClick={() => window.open(selected.vetCertificateUrl, '_blank')}
+                          >
+                             <ExternalLink className="w-4 h-4 text-primary" /> View Vet Certificate
+                          </Button>
+                       )}
+                       {!selected?.vetCertificateUrl && (
+                          <p className="text-[10px] text-center italic text-muted-foreground opacity-60">No digital certificate attached</p>
+                       )}
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                       <MapPin className="w-4 h-4 text-primary" /> Location & Contact
+                    </p>
+                    <div className="bg-muted/20 p-6 rounded-[2rem] border-2 border-dashed space-y-4">
+                       <div className="text-sm font-bold leading-tight">
+                          <p className="text-muted-foreground text-[10px] uppercase font-black mb-1 opacity-60">Pick-up Address</p>
+                          {selected?.fullAddress || `${selected?.area}, ${selected?.city}`}
+                       </div>
+                       <Button 
+                         variant="ghost" 
+                         className="w-full rounded-xl font-black bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all gap-2"
+                         onClick={() => {
+                           if (selected?.sellerPhone) {
+                             navigator.clipboard.writeText(selected.sellerPhone);
+                             toast.success("Phone number copied to clipboard");
+                           }
+                         }}
+                       >
+                          <Phone className="w-4 h-4" /> {selected?.sellerPhone || "Contact Protected"}
+                       </Button>
+                    </div>
+                 </div>
+              </div>
+
               <div>
-                 <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-3 h-3 text-primary" /> Listing Description
+                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-primary" /> Owner's Statement
                  </p>
-                 <p className="text-sm leading-relaxed font-medium bg-muted/20 p-4 rounded-2xl border">
-                    {selected?.description || "No description provided for this listing."}
+                 <div className="text-sm leading-relaxed font-medium bg-muted/10 p-6 rounded-[2rem] border italic shadow-inner">
+                    "{selected?.description || "The owner has not provided a textual description for this listing."}"
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground/30 uppercase text-right mt-3 tracking-widest">
+                    Listing ID: {String(selected?.id).toUpperCase()} • UID: {String(selected?.userId)}
                  </p>
               </div>
 
