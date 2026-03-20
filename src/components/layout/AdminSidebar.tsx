@@ -36,8 +36,8 @@ const navItems = [
   ]},
   { group: "System", items: [
     { to: "/settings", icon: Settings, label: "Core Settings" },
-    { to: "/privacy-policy", icon: Shield, label: "Privacy Protocol" },
-    { to: "/terms-conditions", icon: Gavel, label: "User Charter" },
+    { to: "/privacy", icon: Shield, label: "Privacy Protocol" },
+    { to: "/terms", icon: Gavel, label: "User Charter" },
   ]}
 ];
 

@@ -7,10 +7,11 @@ import {
   CheckCircle2, AlertCircle, User, Clock
 } from "lucide-react";
 import { db } from "@/firebase/config";
-import { 
-  collection, getDocs, doc, updateDoc, 
-  deleteDoc, orderBy, query, onSnapshot 
+import {
+  collection, doc, updateDoc,
+  deleteDoc, orderBy, query, onSnapshot
 } from "firebase/firestore";
+import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,47 +59,44 @@ export default function Reviews() {
   const [activeTab, setActiveTab] = useState("reviews");
 
   useEffect(() => {
+    // ── Reviews: fetch from Postgres via REST API ──
     setLoading(true);
-    const qRev = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+    api.get('/api/reviews?limit=100')
+      .then(res => {
+        const data = (res.data.reviews || []).map((r: any) => ({
+          ...r,
+          id: String(r.id),
+          createdAt: r.createdAt ? new Date(r.createdAt) : new Date(),
+        } as Review));
+        setReviews(data);
+      })
+      .catch(e => {
+        console.error('Failed to fetch reviews:', e);
+        toast.error('Failed to load reviews');
+      })
+      .finally(() => setLoading(false));
+
+    // ── Reports: still in Firestore ──
     const qRep = query(collection(db, 'reports'), orderBy('createdAt', 'desc'));
-
-    const unsubRev = onSnapshot(qRev, (snap) => {
-      setReviews(snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate() : new Date(d.data().createdAt)
-      } as Review)));
-      setLoading(false);
-    });
-
     const unsubRep = onSnapshot(qRep, (snap) => {
       setReports(snap.docs.map(d => ({
         id: d.id,
         ...d.data(),
-        createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate() : new Date(d.data().createdAt)
+        createdAt: d.data().createdAt?.toDate ? d.data().createdAt.toDate() : new Date(d.data().createdAt),
       } as Report)));
     });
 
-    return () => { unsubRev(); unsubRep(); };
+    return () => { unsubRep(); };
   }, []);
 
   const handleAcknowledgeReview = async (id: string) => {
-    try {
-      await updateDoc(doc(db, 'reviews', id), { isFlagged: false });
-      toast.success("Review verified");
-    } catch (e) {
-      toast.error("Action failed");
-    }
+    // Reviews are in Postgres — requires PATCH /api/reviews/:id endpoint
+    toast.info("Review moderation endpoint coming soon");
   };
 
   const handleDeleteReview = async (id: string) => {
-    if (!confirm("Permanently incinerate this review?")) return;
-    try {
-      await deleteDoc(doc(db, 'reviews', id));
-      toast.success("Review record expunged");
-    } catch (e) {
-      toast.error("Critical failure during deletion");
-    }
+    // Reviews are in Postgres — requires DELETE /api/reviews/:id endpoint
+    toast.info("Review deletion endpoint coming soon");
   };
 
   const handleResolveReport = async (reportId: string) => {
@@ -113,13 +111,15 @@ export default function Reviews() {
   const handleTakeDownListing = async (listingId: string, reportId: string) => {
     if (!confirm("Exec takedown protocol for this listing?")) return;
     try {
-      await updateDoc(doc(db, 'listings', listingId), { 
-        status: 'rejected', 
-        adminNote: 'Decommissioned via Administrative Takedown Protocol (User Reports).' 
+      // Takedown listing via REST API (listings are in Postgres)
+      await api.patch(`/api/listings/${listingId}`, {
+        status: 'rejected',
+        adminNote: 'Decommissioned via Administrative Takedown Protocol (User Reports).',
       });
-      await updateDoc(doc(db, 'reports', reportId), { 
-        status: 'resolved', 
-        actionTaken: 'Listing Terminated' 
+      // Resolve report in Firestore
+      await updateDoc(doc(db, 'reports', reportId), {
+        status: 'resolved',
+        actionTaken: 'Listing Terminated',
       });
       toast.success("Listing neutralised");
     } catch (e) {
