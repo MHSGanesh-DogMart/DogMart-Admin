@@ -61,7 +61,7 @@ export default function Reviews() {
   useEffect(() => {
     // ── Reviews: fetch from Postgres via REST API ──
     setLoading(true);
-    api.get('/api/reviews?limit=100')
+    api.get('/api/reviews?limit=20')
       .then(res => {
         const data = (res.data.reviews || []).map((r: any) => ({
           ...r,

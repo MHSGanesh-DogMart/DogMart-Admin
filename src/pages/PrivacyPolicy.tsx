@@ -1,132 +1,111 @@
-import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Shield, Lock, Eye, Database, Info, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Shield, Eye, Database, Lock, CheckCircle2 } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import FloatingPaws from "@/components/FloatingPaws";
 
 export default function PrivacyPolicy() {
-  const navigate = useNavigate();
-
   const sections = [
     {
       title: "1. Information We Collect",
-      icon: Database,
-      content: [
-        { subtitle: "Personal Information", text: "We collect your name, email address, phone number, and profile picture to create and manage your account." },
-        { subtitle: "Pet Information", text: "Details about your pets, including name, breed, age, gender, and medical/behavioral notes, to ensure safe and personalized care." },
-        { subtitle: "Location Data", text: "With your permission, we collect precise location data to show you nearby services and enable distance-based matching." }
+      icon: <Database className="text-primary" size={28} />,
+      items: [
+        { title: "Personal Information", desc: "Name, email, phone number, and profile picture to maintain your account." },
+        { title: "Pet Details", desc: "Breed, age, gender, and health notes to ensure safe & personalized care." },
+        { title: "Location Data", desc: "We use location (with your permission) to show verified kennels and services near you." }
       ]
     },
     {
       title: "2. How We Use Your Data",
-      icon: Eye,
-      content: [
-        { subtitle: "Providing Services", text: "To facilitate bookings between pet parents and service providers and manage transactional workflows." },
-        { subtitle: "Safety & Security", text: "To verify provider identities, prevent fraud, and ensure a high-trust environment for our community." },
-        { subtitle: "Communication", text: "To send you booking updates, service notifications, and support messages related to your account." }
+      icon: <Eye className="text-primary" size={28} />,
+      items: [
+        { title: "Core Services", desc: "To facilitate seamless pet adoption, product purchases, and service bookings." },
+        { title: "Platform Safety", desc: "To verify users and kennels, preventing fraud and building a high-trust community." },
+        { title: "Updates", desc: "To send you booking confirmations, app updates, and support messages." }
       ]
     },
     {
-      title: "3. Data Sharing",
-      icon: Shield,
-      content: [
-        { subtitle: "Service Providers", text: "Limited information (pet details, location, contact) is shared with providers only after you initiate a booking." },
-        { subtitle: "No Selling", text: "We do NOT sell your personal data to third-party advertisers or data brokers. Your privacy is our priority." }
-      ]
-    },
-    {
-      title: "4. Data Security",
-      icon: Lock,
-      content: [
-        { subtitle: "Encryption", text: "We use enterprise-grade encryption and secure Google Firebase infrastructure to protect your data at rest and in transit." },
-        { subtitle: "Payments", text: "All financial transactions are handled securely by Razorpay. We do not store your credit card or banking credentials on our servers." }
+      title: "3. Data Sharing & Security",
+      icon: <Shield className="text-primary" size={28} />,
+      items: [
+        { title: "Trusted Providers", desc: "Limited details are shared with service providers ONLY after you confirm a booking." },
+        { title: "No Selling Data", desc: "We absolutely do NOT sell your personal data to advertisers or third-party brokers." },
+        { title: "Bank-Grade Encryption", desc: "Your data is secured using top-tier encryption via Google Firebase infrastructure." }
       ]
     }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-primary/20 pb-20">
-      {/* Header */}
-      <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200 shadow-sm transition-all h-16 flex items-center">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-             <span className="text-xl font-black text-primary tracking-tighter">PetSaathi</span>
-          </Link>
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/")} 
-            className="text-slate-500 hover:text-primary gap-2 rounded-xl h-9"
-          >
-            <ArrowLeft size={16} /> Home
-          </Button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background flex flex-col pt-20 relative overflow-hidden">
+      <FloatingPaws />
+      <Navbar />
 
-      <main className="container mx-auto px-4 pt-32 max-w-4xl space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Title Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">Privacy Policy</h1>
-          <p className="text-slate-500 font-medium">Last Updated: March 19, 2026</p>
-          <div className="flex justify-center pt-2">
-             <div className="h-1.5 w-20 bg-primary rounded-full" />
+      <main className="flex-1 container mx-auto px-4 py-16 relative z-10 max-w-4xl">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16 space-y-4"
+        >
+          <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock size={40} className="text-primary" />
           </div>
+          <h1 className="font-display text-4xl md:text-5xl font-black text-foreground">
+            Privacy <span className="text-primary">Policy</span>
+          </h1>
+          <p className="text-muted-foreground text-lg md:text-xl font-medium max-w-2xl mx-auto">
+            At PetSaathi, your privacy is just as important as your pet's happiness. Here is exactly how we protect your data.
+          </p>
+        </motion.div>
+
+        <div className="space-y-12">
+          {sections.map((section, idx) => (
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              className="bg-card p-8 md:p-10 rounded-3xl shadow-sm border border-primary/5 hover:border-primary/20 transition-colors"
+            >
+              <div className="flex items-center gap-4 mb-8">
+                <div className="bg-primary/10 p-4 rounded-2xl">
+                  {section.icon}
+                </div>
+                <h2 className="text-2xl font-black text-foreground">{section.title}</h2>
+              </div>
+              
+              <div className="grid gap-6 md:grid-cols-2">
+                {section.items.map((item, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <CheckCircle2 className="text-primary shrink-0 mt-1" size={20} />
+                    <div>
+                      <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Introduction Card */}
-        <Card className="border-none shadow-sm rounded-3xl bg-primary/5 border-2 border-primary/10 overflow-hidden">
-          <CardContent className="p-8 md:p-10 flex gap-6 items-start">
-             <div className="bg-primary/20 p-3 rounded-2xl text-primary hidden sm:block">
-                <Info size={24} />
-             </div>
-             <p className="text-lg font-medium text-slate-700 leading-relaxed italic">
-                At PetSaathi, your privacy is a fundamental right. We are committed to transparency about the data we collect and how we use it to provide the best possible care for your pets.
-             </p>
-          </CardContent>
-        </Card>
-
-        {/* Detailed Sections */}
-        <div className="space-y-8">
-           {sections.map((section, idx) => (
-             <section key={idx} className="space-y-6">
-                <div className="flex items-center gap-4 pl-2">
-                   <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary border border-slate-100">
-                      <section.icon size={20} />
-                   </div>
-                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">{section.title}</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                   {section.content.map((item, i) => (
-                     <Card key={i} className="border-none shadow-sm rounded-2xl bg-white border border-slate-100/50 hover:shadow-md transition-shadow">
-                        <CardContent className="p-6 md:p-8">
-                           <h4 className="text-sm font-black uppercase text-primary tracking-widest mb-2">{item.subtitle}</h4>
-                           <p className="text-slate-600 font-medium leading-relaxed">{item.text}</p>
-                        </CardContent>
-                     </Card>
-                   ))}
-                </div>
-             </section>
-           ))}
-        </div>
-
-        {/* Contact Section */}
-        <section className="bg-slate-900 rounded-[2.5rem] p-10 md:p-16 text-white text-center space-y-6 shadow-2xl relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
-           <div className="bg-primary/20 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4">
-              <Mail size={32} className="text-primary" />
-           </div>
-           <h3 className="text-3xl font-black">Questions or Concerns?</h3>
-           <p className="text-slate-400 font-medium max-w-xl mx-auto italic leading-relaxed">
-              If you have any questions about this Privacy Policy or our data practices, please reach out to our privacy team at:
-           </p>
-           <div className="pt-4">
-              <a href="mailto:hemanthtech517@gmail.com" className="text-2xl font-black text-primary hover:underline underline-offset-8">hemanthtech517@gmail.com</a>
-           </div>
-        </section>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-16 bg-primary/5 rounded-3xl p-10 text-center border border-primary/10"
+        >
+          <h3 className="text-2xl font-black mb-4">Still have questions?</h3>
+          <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
+            Our data privacy team is always here to help. Reach out to us anytime regarding your personal information.
+          </p>
+          <a href="mailto:hemanthtech517@gmail.com" className="font-bold text-primary text-xl hover:underline">
+            hemanthtech517@gmail.com
+          </a>
+        </motion.div>
       </main>
 
-      <footer className="text-center py-12 text-slate-300 font-black uppercase tracking-[0.3em] text-[10px] mt-10">
-         © 2026 PetSaathi • Secure Infrastructure Core
-      </footer>
+      <Footer />
     </div>
   );
 }
