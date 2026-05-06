@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Build / runtime artifacts
+build_err.log
+out.log
+start_error.log
+src_legacy/
+test_query.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

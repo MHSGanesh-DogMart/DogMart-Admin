@@ -18,8 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface AppSettings {
-  maxFreeListings: number;
-  subscriptionPrice: number;
   listingExpiryDays: number;
   supportPhone: string;
   supportEmail: string;
@@ -28,8 +26,6 @@ interface AppSettings {
 export default function Settings() {
   const [profile, setProfile] = useState({ name: 'Admin', bio: 'Platform Administrator' });
   const [appSettings, setAppSettings] = useState<AppSettings>({
-    maxFreeListings: 3,
-    subscriptionPrice: 99,
     listingExpiryDays: 30,
     supportPhone: '+91 00000 00000',
     supportEmail: 'hemanthtech517@gmail.com'
@@ -43,8 +39,6 @@ export default function Settings() {
       const res = await api.get('/settings');
       if (res.data.settings) {
         setAppSettings({
-          maxFreeListings: Number(res.data.settings.maxFreeListings || 3),
-          subscriptionPrice: Number(res.data.settings.subscriptionPrice || 99),
           listingExpiryDays: Number(res.data.settings.listingExpiryDays || 30),
           supportPhone: res.data.settings.supportPhone || '+91 00000 00000',
           supportEmail: res.data.settings.supportEmail || 'hemanthtech517@gmail.com'
@@ -156,17 +150,7 @@ export default function Settings() {
            </div>
            <Card className="rounded-[3rem] border-none shadow-premium bg-background p-10 overflow-hidden relative">
               <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none text-9xl font-black italic uppercase">FINANCE</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-                 <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 italic">Free Listing Quota</label>
-                    <Input type="number" className="rounded-2xl h-16 bg-muted border-none font-black text-3xl text-primary text-center shadow-inner" value={appSettings.maxFreeListings} onChange={e => setAppSettings(a => ({ ...a, maxFreeListings: Number(e.target.value) }))} />
-                    <p className="text-[9px] font-medium text-center opacity-40 uppercase tracking-tighter">Threshold before premium required</p>
-                 </div>
-                 <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 italic">Premium Price (₹)</label>
-                    <Input type="number" className="rounded-2xl h-16 bg-muted border-none font-black text-3xl text-emerald-600 text-center shadow-inner" value={appSettings.subscriptionPrice} onChange={e => setAppSettings(a => ({ ...a, subscriptionPrice: Number(e.target.value) }))} />
-                    <p className="text-[9px] font-medium text-center opacity-40 uppercase tracking-tighter">Monthly MRR anchor point</p>
-                 </div>
+              <div className="grid grid-cols-1 gap-8 relative z-10">
                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 italic">Expiry Horizon (Days)</label>
                     <Input type="number" className="rounded-2xl h-16 bg-muted border-none font-black text-3xl text-amber-600 text-center shadow-inner" value={appSettings.listingExpiryDays} onChange={e => setAppSettings(a => ({ ...a, listingExpiryDays: Number(e.target.value) }))} />

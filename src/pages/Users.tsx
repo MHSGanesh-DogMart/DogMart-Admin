@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, X, User as UserIcon, ShieldCheck, 
-  ShieldOff, MoreVertical, Filter, Download
+import {
+  Search, X, User as UserIcon, ShieldCheck,
+  ShieldOff, MoreVertical, Filter, Download, BadgeCheck
 } from "lucide-react";
 import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,13 +16,20 @@ import {
 import { toast } from "sonner";
 
 interface User {
-  id: string;
+  // Backend returns the Prisma primary key as `uid` (string after JSON serialization).
+  // Older code used `id` — keep optional for backward-compat.
+  uid: string;
+  id?: string;
   name?: string;
   email?: string;
   phone?: string;
   isBlocked: boolean;
+  isVerified?: boolean;
   createdAt?: string;
 }
+
+// Helper — works whether the API returns uid or id
+const userKey = (u: User) => u.uid || u.id || '';
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
@@ -32,6 +39,7 @@ export default function Users() {
   const [selected, setSelected] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [blocking, setBlocking] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -67,16 +75,35 @@ export default function Users() {
   }, [search, filter, users]);
 
   const handleToggleBlock = async (user: User) => {
+    const id = userKey(user);
+    if (!id) { toast.error("User has no ID"); return; }
     setBlocking(true);
     try {
-      await api.patch(`/users/${user.id}/status`, { isBlocked: !user.isBlocked });
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isBlocked: !user.isBlocked } : u));
+      await api.patch(`/users/${id}/status`, { isBlocked: !user.isBlocked });
+      setUsers(prev => prev.map(u => userKey(u) === id ? { ...u, isBlocked: !user.isBlocked } : u));
       toast.success(`User ${!user.isBlocked ? 'blocked' : 'unblocked'} successfully`);
       setSelected(null);
     } catch (e) {
       toast.error("Failed to update user status");
     } finally {
       setBlocking(false);
+    }
+  };
+
+  const handleToggleVerified = async (user: User) => {
+    const id = userKey(user);
+    if (!id) { toast.error("User has no ID"); return; }
+    setVerifying(true);
+    try {
+      const next = !user.isVerified;
+      await api.patch(`/users/${id}/status`, { isVerified: next });
+      setUsers(prev => prev.map(u => userKey(u) === id ? { ...u, isVerified: next } : u));
+      setSelected(prev => prev && userKey(prev) === id ? { ...prev, isVerified: next } : prev);
+      toast.success(next ? 'Seller verified' : 'Verification removed');
+    } catch (e) {
+      toast.error("Failed to update verification");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -156,7 +183,7 @@ export default function Users() {
                       </tr>
                     ) : filtered.map((u, i) => (
                       <motion.tr 
-                        key={u.id}
+                        key={userKey(u)}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -177,9 +204,17 @@ export default function Users() {
                           <div className="text-[10px] text-muted-foreground font-bold tracking-tight uppercase mt-0.5">{u.phone || "No Phone"}</div>
                         </td>
                         <td className="px-8 py-5">
-                          <Badge variant={u.isBlocked ? "destructive" : "success"} className="rounded-lg px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
-                            {u.isBlocked ? "Blocked" : "Active"}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={u.isBlocked ? "destructive" : "success"} className="rounded-lg px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                              {u.isBlocked ? "Blocked" : "Active"}
+                            </Badge>
+                            {u.isVerified && (
+                              <Badge variant="default" className="rounded-lg px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider shadow-sm bg-blue-500 text-white hover:bg-blue-600">
+                                <BadgeCheck className="w-3 h-3 mr-1" />
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="px-8 py-5 text-right">
                           <Button variant="ghost" size="sm" className="rounded-lg font-bold group-hover:bg-primary group-hover:text-white transition-all underline underline-offset-4 decoration-primary/20 group-hover:decoration-white/20">
@@ -226,22 +261,33 @@ export default function Users() {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button 
-                onClick={() => selected && handleToggleBlock(selected)}
-                disabled={blocking}
-                variant={selected?.isBlocked ? "success" : "destructive"} 
-                className="flex-1 rounded-2xl font-black shadow-lg"
+            <div className="space-y-3 pt-4">
+              <Button
+                onClick={() => selected && handleToggleVerified(selected)}
+                disabled={verifying}
+                variant={selected?.isVerified ? "outline" : "default"}
+                className={`w-full rounded-2xl font-black shadow-lg ${selected?.isVerified ? '' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
               >
-                {blocking ? 'Updating...' : (selected?.isBlocked ? "Unblock Account" : "Suspend Account")}
+                <BadgeCheck className="w-4 h-4 mr-2" />
+                {verifying ? 'Updating...' : (selected?.isVerified ? "Remove Verification" : "Mark as Verified Seller")}
               </Button>
-              <Button 
-                variant="outline" 
-                className="rounded-2xl font-bold border-muted-foreground/20"
-                onClick={() => setSelected(null)}
-              >
-                Close
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => selected && handleToggleBlock(selected)}
+                  disabled={blocking}
+                  variant={selected?.isBlocked ? "success" : "destructive"}
+                  className="flex-1 rounded-2xl font-black shadow-lg"
+                >
+                  {blocking ? 'Updating...' : (selected?.isBlocked ? "Unblock Account" : "Suspend Account")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="rounded-2xl font-bold border-muted-foreground/20"
+                  onClick={() => setSelected(null)}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

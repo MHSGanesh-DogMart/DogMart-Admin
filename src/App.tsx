@@ -22,9 +22,7 @@ import Categories from "./pages/Categories";
 import ProductCategories from "./pages/ProductCategories";
 import ServiceCategories from "./pages/ServiceCategories";
 import Breeds from "./pages/Breeds";
-import Subscriptions from "./pages/Subscriptions";
 import Reviews from "./pages/Reviews";
-import Payments from "./pages/Payments";
 import Locations from "./pages/Locations";
 import Support from "./pages/Support";
 import Notifications from "./pages/Notifications";
@@ -65,9 +63,7 @@ const App = () => (
             <Route path="/product-categories" element={<ProtectedRoute><AdminLayout><ProductCategories /></AdminLayout></ProtectedRoute>} />
             <Route path="/service-categories" element={<ProtectedRoute><AdminLayout><ServiceCategories /></AdminLayout></ProtectedRoute>} />
             <Route path="/breeds" element={<ProtectedRoute><AdminLayout><Breeds /></AdminLayout></ProtectedRoute>} />
-            <Route path="/subscriptions" element={<ProtectedRoute><AdminLayout><Subscriptions /></AdminLayout></ProtectedRoute>} />
             <Route path="/reviews" element={<ProtectedRoute><AdminLayout><Reviews /></AdminLayout></ProtectedRoute>} />
-            <Route path="/payments" element={<ProtectedRoute><AdminLayout><Payments /></AdminLayout></ProtectedRoute>} />
             <Route path="/locations" element={<ProtectedRoute><AdminLayout><Locations /></AdminLayout></ProtectedRoute>} />
             <Route path="/support" element={<ProtectedRoute><AdminLayout><Support /></AdminLayout></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><AdminLayout><Notifications /></AdminLayout></ProtectedRoute>} />

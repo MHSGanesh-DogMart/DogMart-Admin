@@ -28,8 +28,6 @@ const navItems = [
   ]},
   { group: "Engagement", items: [
     { to: "/banners", icon: ImageIcon, label: "Promo Banners" },
-    { to: "/subscriptions", icon: CreditCard, label: "Subscriptions" },
-    { to: "/payments", icon: CreditCard, label: "Financials" },
     { to: "/reviews", icon: Star, label: "Moderation Grid" },
     { to: "/support", icon: Mail, label: "Command Inbox" },
     { to: "/notifications", icon: Bell, label: "Emission Center" },

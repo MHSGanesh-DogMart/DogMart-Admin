@@ -49,7 +49,6 @@ const Dashboard = () => {
     { label: "Total Users", value: stats?.users || 0, icon: Users, color: "text-blue-500", trend: "+12%", up: true },
     { label: "Active Pets", value: stats?.activePets || 0, icon: TrendingUp, color: "text-orange-500", trend: "+5%", up: true },
     { label: "Active Products", value: stats?.activeProducts || 0, icon: ShoppingBag, color: "text-green-500", trend: "+18%", up: true },
-    { label: "Subscriptions", value: stats?.subs || 0, icon: CalendarDays, color: "text-purple-500", trend: "+2%", up: true },
   ];
 
   return (
