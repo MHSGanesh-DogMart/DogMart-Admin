@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
-import { 
-  Users, TrendingUp, ShoppingBag, CalendarDays, 
-  AlertTriangle, ArrowUpRight, TrendingDown,
-  Clock, CheckCircle, Package, MessageSquare
+import {
+  Users, TrendingUp, ShoppingBag, ArrowUpRight, CheckCircle
 } from "lucide-react";
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, BarChart, Bar 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -16,20 +14,10 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-const data = [
-  { day: "Mon", earnings: 4500, users: 400 },
-  { day: "Tue", earnings: 5200, users: 300 },
-  { day: "Wed", earnings: 4800, users: 500 },
-  { day: "Thu", earnings: 6100, users: 200 },
-  { day: "Fri", earnings: 5900, users: 600 },
-  { day: "Sat", earnings: 7200, users: 400 },
-  { day: "Sun", earnings: 6800, users: 700 },
-];
-
-
 const Dashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated] = useState(() => format(new Date(), 'PPpp'));
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -46,10 +34,12 @@ const Dashboard = () => {
   }, []);
 
   const statsCards = [
-    { label: "Total Users", value: stats?.users || 0, icon: Users, color: "text-blue-500", trend: "+12%", up: true },
-    { label: "Active Pets", value: stats?.activePets || 0, icon: TrendingUp, color: "text-orange-500", trend: "+5%", up: true },
-    { label: "Active Products", value: stats?.activeProducts || 0, icon: ShoppingBag, color: "text-green-500", trend: "+18%", up: true },
+    { label: "Total Users", value: stats?.users || 0, icon: Users, color: "text-blue-500" },
+    { label: "Active Pets", value: stats?.activePets || 0, icon: TrendingUp, color: "text-orange-500" },
+    { label: "Active Products", value: stats?.activeProducts || 0, icon: ShoppingBag, color: "text-green-500" },
   ];
+
+  const chartData: { day: string; earnings: number; users: number }[] = stats?.chartData || [];
 
   return (
     <div className="space-y-8">
@@ -61,9 +51,13 @@ const Dashboard = () => {
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
             <p className="text-sm font-medium">Last updated</p>
-            <p className="text-xs text-muted-foreground">Today at 05:40 AM</p>
+            <p className="text-xs text-muted-foreground">{lastUpdated}</p>
           </div>
-          <button className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold shadow-premium hover:opacity-90 transition-opacity">
+          <button
+            disabled
+            title="Coming soon"
+            className="bg-primary/50 text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold cursor-not-allowed opacity-60"
+          >
             Export Report
           </button>
         </div>
@@ -107,8 +101,13 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="h-[300px]">
+            {chartData.length === 0 && !loading ? (
+              <div className="flex flex-col items-center justify-center h-full opacity-40">
+                <p className="text-xs font-bold uppercase tracking-widest">No chart data yet</p>
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
@@ -146,6 +145,7 @@ const Dashboard = () => {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
