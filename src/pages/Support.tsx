@@ -1,194 +1,263 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Mail, CheckCircle, Clock, Trash2, Search, 
-  Filter, Inbox, Reply, User, Calendar,
-  MoreVertical, ShieldAlert, Loader2,
-  CheckCircle2
+import {
+  Mail, CheckCircle2, Inbox, Reply, User as UserIcon,
+  Loader2, AlertCircle, Search
 } from "lucide-react";
-import { db } from "@/firebase/config";
-import { 
-  collection, query, orderBy, onSnapshot, 
-  doc, updateDoc, deleteDoc 
-} from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import api from "@/lib/api";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, SelectContent, SelectItem, 
-  SelectTrigger, SelectValue 
-} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  comment: string;
-  status: 'read' | 'unread';
-  createdAt: any;
+// SupportTicket comes from POST /api/support — fired by the Flutter app's
+// Help & Support → "Message Admin Directly" form.
+interface SupportUser {
+  uid: number;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+interface Ticket {
+  id: number;
+  userId: number;
+  subject: string;
+  message: string;
+  status: 'open' | 'resolved' | 'closed';
+  adminReply: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: SupportUser | null;
 }
 
 export default function Support() {
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'resolved' | 'closed'>('all');
+  const [selected, setSelected] = useState<Ticket | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, 'contact_messages'),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(doc.data().createdAt)
-      } as ContactMessage));
-      setMessages(data);
+  const fetchTickets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/support');
+      setTickets(res.data.tickets || []);
+    } catch (e) {
+      console.error('Failed to fetch tickets:', e);
+      toast.error('Failed to load support tickets.');
+    } finally {
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching support messages:", error);
-      toast.error("CRM Sync Interrupted");
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
 
-  const handleMarkStatus = async (msg: ContactMessage) => {
-    try {
-      const newStatus = msg.status === 'unread' ? 'read' : 'unread';
-      await updateDoc(doc(db, 'contact_messages', msg.id), { status: newStatus });
-      toast.success(newStatus === 'read' ? "Marked as processed" : "Marked as pending");
-    } catch (error) {
-      toast.error("Status update failed");
-    }
-  };
+  useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Permanently archive this inquiry?")) return;
-    try {
-      await deleteDoc(doc(db, 'contact_messages', id));
-      toast.success("Inquiry expunged from records");
-    } catch (error) {
-      toast.error("Deletion failed");
-    }
-  };
-
-  const filtered = messages.filter(msg => {
-    const matchesSearch = 
-      msg.name?.toLowerCase().includes(search.toLowerCase()) ||
-      msg.email?.toLowerCase().includes(search.toLowerCase()) ||
-      msg.comment?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' ? true : msg.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  const filtered = tickets.filter(t => {
+    if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return (
+      t.subject.toLowerCase().includes(s) ||
+      t.message.toLowerCase().includes(s) ||
+      (t.user?.name || '').toLowerCase().includes(s) ||
+      (t.user?.email || '').toLowerCase().includes(s)
+    );
   });
 
-  const unreadCount = messages.filter(m => m.status === 'unread').length;
+  const openCount = tickets.filter(t => t.status === 'open').length;
+
+  const handleSendReply = async () => {
+    if (!selected || !replyText.trim()) return;
+    setSending(true);
+    try {
+      await api.put(`/support/${selected.id}`, {
+        adminReply: replyText.trim(),
+        status: 'resolved',
+      });
+      toast.success('Reply sent. User has been notified.');
+      setReplyText('');
+      setSelected(null);
+      fetchTickets();
+    } catch (e) {
+      console.error('Reply failed:', e);
+      toast.error('Failed to send reply.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleMarkStatus = async (ticket: Ticket, status: 'open' | 'resolved' | 'closed') => {
+    try {
+      await api.put(`/support/${ticket.id}`, { status });
+      toast.success(`Marked as ${status}`);
+      fetchTickets();
+    } catch (e) {
+      toast.error('Failed to update status');
+    }
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-foreground font-display uppercase italic text-primary flex items-center gap-3">
-             Command Inbox <Badge className="bg-primary text-white border-none font-black h-6">{unreadCount}</Badge>
-          </h1>
-          <p className="text-muted-foreground mt-1 font-medium font-sans">Manage user inquiries and community signals. 📩</p>
+          <h1 className="text-3xl font-bold tracking-tight">Support Tickets</h1>
+          <p className="text-muted-foreground mt-1">
+            Messages from users sent via the app's "Message Admin Directly" form.
+            {openCount > 0 && (
+              <span className="ml-2 font-bold text-primary">
+                {openCount} open
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-4 items-center bg-muted/10 p-4 rounded-[2.5rem] border border-muted-foreground/5 shadow-inner">
-         <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-               placeholder="Search signal stream..." 
-               className="pl-12 h-12 bg-background border-none shadow-sm rounded-2xl font-bold italic"
-               value={search}
-               onChange={e => setSearch(e.target.value)}
-            />
-         </div>
-         <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full xl:w-56 h-12 rounded-2xl bg-background border-none shadow-sm font-black uppercase text-[10px] tracking-widest px-6 italic">
-               <SelectValue placeholder="All Signals" />
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl border-none shadow-premium font-black uppercase text-[10px] p-2">
-               <SelectItem value="all">ALL SIGNALS</SelectItem>
-               <SelectItem value="unread">PENDING</SelectItem>
-               <SelectItem value="read">PROCESSED</SelectItem>
-            </SelectContent>
-         </Select>
-      </div>
+      <Card className="border-none shadow-soft">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-muted/30 p-4 rounded-2xl border">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search subject, message, or user..."
+                className="pl-10 bg-background border-none shadow-sm rounded-xl"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex bg-background border rounded-xl p-1 shadow-sm">
+              {(['all', 'open', 'resolved', 'closed'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setStatusFilter(f)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    statusFilter === f
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {f.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
 
-      <div className="grid grid-cols-1 gap-6">
-        <AnimatePresence mode="popLayout">
-           {loading ? (
-              Array(3).fill(0).map((_, i) => <div key={i} className="h-48 rounded-[2.5rem] bg-muted animate-pulse border-none shadow-premium" />)
-           ) : filtered.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center opacity-20 uppercase font-black italic">
-                 <Inbox className="w-16 h-16 mb-4" /> Frequency Silent / No Messages
+        <CardContent className="space-y-3">
+          {loading ? (
+            <div className="h-64 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="h-64 flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <Inbox className="w-12 h-12 opacity-20" />
+              <p className="font-bold">No tickets match your filter</p>
+            </div>
+          ) : (
+            <AnimatePresence>
+              {filtered.map((t, i) => (
+                <motion.div
+                  key={t.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="flex items-start gap-4 p-4 rounded-2xl border bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors"
+                  onClick={() => { setSelected(t); setReplyText(t.adminReply || ''); }}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-sm truncate">{t.subject}</span>
+                      <StatusBadge status={t.status} />
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {t.message}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">
+                      <UserIcon className="w-3 h-3 inline mr-1" />
+                      {t.user?.name || `User #${t.userId}`}
+                      {t.user?.phone && ` · ${t.user.phone}`}
+                      <span className="mx-1">·</span>
+                      {format(new Date(t.createdAt), 'MMM d, HH:mm')}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reply dialog */}
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-xl rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>{selected?.subject}</DialogTitle>
+            <p className="text-xs text-muted-foreground font-medium pt-1">
+              From {selected?.user?.name || `User #${selected?.userId}`}
+              {selected?.user?.phone && ` · ${selected.user.phone}`}
+              {selected?.user?.email && ` · ${selected.user.email}`}
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-muted/40 border whitespace-pre-wrap text-sm">
+              {selected?.message}
+            </div>
+            {selected?.adminReply && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <p className="text-xs font-bold text-primary mb-1">YOUR PREVIOUS REPLY</p>
+                <p className="text-sm whitespace-pre-wrap">{selected.adminReply}</p>
               </div>
-           ) : filtered.map((msg, i) => (
-             <motion.div
-               key={msg.id}
-               initial={{ opacity: 0, x: -20 }}
-               animate={{ opacity: 1, x: 0 }}
-               transition={{ delay: i * 0.05 }}
-               className={`group flex flex-col md:flex-row gap-8 rounded-[2.5rem] p-8 transition-all duration-500 overflow-hidden relative
-                 ${msg.status === 'unread' ? 'bg-background hover:shadow-2xl border-2 border-primary/10' : 'bg-muted/30 grayscale opacity-60'}`}
-             >
-                <div className="flex-1 space-y-4">
-                   <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-4">
-                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black ${msg.status === 'unread' ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'bg-muted text-muted-foreground'}`}>
-                            {msg.name.charAt(0).toUpperCase()}
-                         </div>
-                         <div>
-                            <h3 className="text-xl font-black font-display tracking-tight text-foreground uppercase flex items-center gap-2">
-                               {msg.name}
-                               {msg.status === 'unread' && <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />}
-                            </h3>
-                            <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
-                               <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {msg.email}</span>
-                               {msg.phone && <span className="opacity-50">• {msg.phone}</span>}
-                               <span className="opacity-50">• {msg.createdAt && !isNaN(msg.createdAt.getTime()) ? format(msg.createdAt, "dd MMM yyyy, HH:mm") : "Date Pending"}</span>
-                            </div>
-                         </div>
-                      </div>
-                      <div className="hidden md:flex gap-2">
-                         <Button 
-                           variant="outline" 
-                           className={`rounded-xl font-black uppercase tracking-widest text-[9px] h-9 gap-2 transition-all ${msg.status === 'unread' ? 'bg-emerald-500/10 text-emerald-600 border-none' : ''}`}
-                           onClick={() => handleMarkStatus(msg)}
-                         >
-                            {msg.status === 'unread' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                            {msg.status === 'unread' ? "Resolve" : "Re-queue"}
-                         </Button>
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleDelete(msg.id)}
-                           className="rounded-xl w-9 h-9 p-0 bg-muted hover:bg-destructive hover:text-white"
-                         >
-                            <Trash2 className="w-3.5 h-3.5" />
-                         </Button>
-                      </div>
-                   </div>
-
-                   <div className="p-6 rounded-[1.5rem] bg-muted/40 border border-muted text-sm font-medium leading-relaxed italic text-foreground/80 relative group-hover:bg-muted/60 transition-colors">
-                      "{msg.comment}"
-                      <Reply className="absolute top-4 right-4 w-4 h-4 opacity-10 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-primary" onClick={() => window.location.href=`mailto:${msg.email}?subject=PetSaathi Support Response`} />
-                   </div>
-                </div>
-             </motion.div>
-           ))}
-        </AnimatePresence>
-      </div>
+            )}
+            <Textarea
+              value={replyText}
+              onChange={e => setReplyText(e.target.value)}
+              placeholder="Type your reply… The user will get a push notification."
+              rows={4}
+              maxLength={2000}
+            />
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            {selected?.status !== 'closed' && (
+              <Button
+                variant="outline"
+                onClick={() => selected && handleMarkStatus(selected, 'closed')}
+                className="rounded-xl"
+              >
+                Close ticket
+              </Button>
+            )}
+            <Button
+              onClick={handleSendReply}
+              disabled={sending || !replyText.trim()}
+              className="rounded-xl"
+            >
+              {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Reply className="w-4 h-4 mr-2" />}
+              {sending ? 'Sending…' : 'Send Reply'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function StatusBadge({ status }: { status: 'open' | 'resolved' | 'closed' }) {
+  if (status === 'open') {
+    return <Badge variant="destructive" className="rounded-md uppercase text-[10px] font-black"><AlertCircle className="w-3 h-3 mr-1" />Open</Badge>;
+  }
+  if (status === 'resolved') {
+    return <Badge variant="success" className="rounded-md uppercase text-[10px] font-black"><CheckCircle2 className="w-3 h-3 mr-1" />Resolved</Badge>;
+  }
+  return <Badge variant="secondary" className="rounded-md uppercase text-[10px] font-black">Closed</Badge>;
 }

@@ -13,6 +13,7 @@ import AdminLayout from "./components/layout/AdminLayout";
 
 // Shell Pages
 import Users from "./pages/Users";
+import UserDetail from "./pages/UserDetail";
 import Listings from "./pages/Listings";
 import Products from "./pages/Products";
 import Services from "./pages/Services";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AdminLayout><Users /></AdminLayout></ProtectedRoute>} />
+            <Route path="/users/:uid" element={<ProtectedRoute><AdminLayout><UserDetail /></AdminLayout></ProtectedRoute>} />
             <Route path="/listings" element={<ProtectedRoute><AdminLayout><Listings /></AdminLayout></ProtectedRoute>} />
             <Route path="/products" element={<ProtectedRoute><AdminLayout><Products /></AdminLayout></ProtectedRoute>} />
             <Route path="/services" element={<ProtectedRoute><AdminLayout><Services /></AdminLayout></ProtectedRoute>} />
